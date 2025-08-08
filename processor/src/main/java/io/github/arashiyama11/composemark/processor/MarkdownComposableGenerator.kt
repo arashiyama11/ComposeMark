@@ -10,8 +10,14 @@ internal fun generateCMFunction(
 ): Sequence<String> = sequence {
     val fnName = fn.simpleName.asString()
 
+    val params = fn.parameters.joinToString(", ") {
+        val name = it.name?.asString() ?: "it"
+        val type = it.type.resolve().declaration.qualifiedName?.asString() ?: "Any"
+        "$name: $type"
+    }
+
     yield("    @Composable")
-    yield("    override fun $fnName() {")
+    yield("    override fun $fnName($params) {")
     yield("        val renderer = remember { $rendererFactoryFqcn() }")
     yieldAll(generateRenderCall(fn, markdownLoader))
     yield("    }")

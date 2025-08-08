@@ -84,20 +84,29 @@ class MarkdownComposeProcessor(
             w.appendLine()
 
             // For each function annotated with either path or source
-            classDecl.getAllFunctions()
+            val declaredFns = classDecl.getAllFunctions()
                 .filter { fn ->
                     fn.annotations.any {
                         val name = it.shortName.asString()
                         name == "GenerateMarkdownFromPath" || name == "GenerateMarkdownFromSource"
                     }
                 }
-                .forEach { fn ->
-                    generateCMFunction(fn, markdownLoader, rendererFactoryFqcn).forEach {
-                        w.appendLine(it)
-                    }
+
+            declaredFns.forEach { fn ->
+                generateCMFunction(fn, markdownLoader, rendererFactoryFqcn).forEach {
+                    w.appendLine(it)
                 }
+            }
 
+            val contentsProperty = findContentsMapDeclaration(classDecl)
 
+            generateContentsMap(
+                isOverride = contentsProperty != null,
+                propertyName = contentsProperty?.simpleName?.asString() ?: "contents",
+                declaredFns = declaredFns
+            ).forEach { line ->
+                w.appendLine(line)
+            }
 
             w.appendLine("}")
         }

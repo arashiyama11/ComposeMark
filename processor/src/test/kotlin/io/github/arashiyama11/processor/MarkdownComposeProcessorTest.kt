@@ -31,12 +31,20 @@ private fun kotlin(path: String): SourceFile {
 class MarkdownComposeProcessorTest {
     private val composeRuntimeStub = kotlin(
         "ComposeRuntime.kt", """
-        package androidx.compose.runtime
+    package androidx.compose.runtime
 
-        annotation class Composable
+@Target(
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.ANNOTATION_CLASS,
+    AnnotationTarget.TYPE,
 
-        inline fun <T> remember(calculation: () -> T): T = calculation()
-        """.trimIndent()
+)
+@Retention(AnnotationRetention.BINARY)   // ← Kotlin の列挙型を使う
+annotation class Composable
+
+inline fun <T> remember(calculation: () -> T): T = calculation()
+  """.trimIndent()
     )
 
     private val composeMaterialStub = kotlin(
@@ -61,32 +69,33 @@ class MarkdownComposeProcessorTest {
     private val generateContentsStub = kotlin("annotation/GenerateMarkdownContents.kt")
     private val generateMarkdownStub = kotlin("annotation/GenerateMarkdownComposable.kt")
 
+    private val contentImports = """
+package io.test
+import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
+import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromPath
+import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromSource
+import io.github.arashiyama11.composemark.core.MarkdownRenderer
+import androidx.compose.runtime.Composable
+import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
+"""
+
+    private val defaultRenderer = """
+        
+class Renderer: MarkdownRenderer {
+    @Composable
+    override fun Render(modifier: Modifier, path: String?, source: String) {
+        Text(source)
+    }
+}
+"""
+
     /* ── テスト対象 ── */
     private val contentsSrc = kotlin(
         "Contents.kt",
         """
-          package io.test
-          import io.github.arashiyama11.composemark.core.annotation.*
-          import androidx.compose.runtime.Composable
-          import io.github.arashiyama11.composemark.core.*
-          import androidx.compose.material3.Text
-          import androidx.compose.ui.Modifier
+         
           
-          
-          
-          class Renderer: MarkdownRenderer{
-            @Composable
-            override fun Render(modifier: Modifier, path: String?, source: String) {
-              Text(source)
-            }
-          }
-          
-          @GenerateMarkdownContents(Renderer::class)
-          interface Contents {
-            @Composable
-            @GenerateMarkdownFromPath("README.md")
-            fun Readme()
-          }
         """.trimIndent()
     )
 
@@ -94,11 +103,44 @@ class MarkdownComposeProcessorTest {
     @Test
     fun `processor generates ContentsImpl`() {
 
-        val compilation = KotlinCompilation().apply {
+        val src = contentImports + defaultRenderer + """
+          @GenerateMarkdownContents(Renderer::class)
+          interface Contents {
+            @Composable
+            @GenerateMarkdownFromPath("README.md")
+            fun Readme()
+            
+            @Composable
+            @GenerateMarkdownFromSource("Apache License 2.0")
+            fun Licence(modifier: Modifier = Modifier)
+            
+            val contentsMap: Map<String, @Composable (Modifier) -> Unit>
+            
+            companion object : Contents by ContentsImpl
+          }
+        """.trimIndent()
 
+
+        val text = getGeneratedFileContent(
+            source = src,
+            filename = "Contents.kt"
+        )
+        println("Generated ContentsImpl.kt:")
+        println(text)
+        assertTrue(text.contains("object ContentsImpl"))
+        assertTrue(text.contains("override fun Readme"))
+    }
+
+
+    @OptIn(ExperimentalCompilerApi::class)
+    fun getGeneratedFileContent(
+        source: String,
+        filename: String = "Contents.kt",
+    ): String {
+        val src = kotlin(filename, source)
+        val compilation = KotlinCompilation().apply {
             useKsp2()
             kspWithCompilation = true
-
 
             sources = listOf(
                 composeRuntimeStub,
@@ -107,14 +149,12 @@ class MarkdownComposeProcessorTest {
                 generateMarkdownStub,
                 markdownRendererStub,
                 composeUiStub,
-                contentsSrc
+                src
             )
             inheritClassPath = true
 
             symbolProcessorProviders += listOf(
-                MarkdownComposeProcessorProvider {
-                    "# README"
-                } as SymbolProcessorProvider
+                MarkdownComposeProcessorProvider { source } as SymbolProcessorProvider
             )
 
             messageOutputStream = System.out
@@ -123,18 +163,14 @@ class MarkdownComposeProcessorTest {
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
+        val implFileName = filename.replace(".kt", "Impl.kt")
         val implFile = compilation.kspSourcesDir
             .resolve("kotlin")
             .walk()
-            .firstOrNull { it.name == "ContentsImpl.kt" }
+            .firstOrNull { it.name == implFileName }
 
-        assertNotNull(implFile, "ContentsImpl.kt should be generated")
+        assertNotNull(implFile, "$implFileName should be generated")
 
-
-        val text = implFile.readText()
-        println("Generated ContentsImpl.kt:")
-        println(text)
-        assertTrue(text.contains("object ContentsImpl"))
-        assertTrue(text.contains("override fun Readme"))
+        return implFile.readText()
     }
 }
