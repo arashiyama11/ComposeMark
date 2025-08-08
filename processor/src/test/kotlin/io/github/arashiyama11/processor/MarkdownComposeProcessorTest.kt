@@ -33,13 +33,8 @@ class MarkdownComposeProcessorTest {
         "ComposeRuntime.kt", """
         package androidx.compose.runtime
 
-        /** 本物の Composable アノテーション */
         annotation class Composable
 
-        /**
-         * テスト用 remember stub
-         * 本来は lambda をキャッシュするが、ここでは即実行して値を返すだけ
-         */
         inline fun <T> remember(calculation: () -> T): T = calculation()
         """.trimIndent()
     )

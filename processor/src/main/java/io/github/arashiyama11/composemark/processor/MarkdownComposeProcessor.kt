@@ -75,14 +75,11 @@ class MarkdownComposeProcessor(
 
             w.appendLine("package $pkg")
             w.appendLine()
-            ///w.appendLine("import javax.annotation.processing.Generated")
             w.appendLine("import androidx.compose.runtime.Composable")
             w.appendLine("import androidx.compose.ui.Modifier")
             w.appendLine("import androidx.compose.runtime.remember")
             w.appendLine("import $rendererFactoryFqcn")
             w.appendLine()
-            ///w.appendLine("@file:Suppress(\"unused\")")
-            //w.appendLine("@Generated(\"io.github.arashiyama11.composemark.processor.MarkdownComposeProcessor\")")
             w.appendLine("object $implName : $className {")
             w.appendLine()
 
@@ -95,38 +92,12 @@ class MarkdownComposeProcessor(
                     }
                 }
                 .forEach { fn ->
-                    val fnName = fn.simpleName.asString()
-
-                    // Determine markdown text literal
-                    val pathAnno = fn.annotations
-                        .firstOrNull { it.shortName.asString() == "GenerateMarkdownFromPath" }
-                    val sourceAnno = fn.annotations
-                        .firstOrNull { it.shortName.asString() == "GenerateMarkdownFromSource" }
-
-                    var path: String? = null
-                    val textLiteral = when {
-                        sourceAnno != null -> {
-                            val src = sourceAnno.arguments.first().value as String
-                            src.literalEscaped()
-                        }
-
-                        pathAnno != null -> {
-                            path = pathAnno.arguments.first().value as String
-                            markdownLoader.load(path).literalEscaped()
-                        }
-
-                        else -> "\"\""
+                    generateCMFunction(fn, markdownLoader, rendererFactoryFqcn).forEach {
+                        w.appendLine(it)
                     }
-
-                    val pathLiteral = path?.let { "\"$it\"" } ?: "null"
-
-                    w.appendLine("    @Composable")
-                    w.appendLine("    override fun $fnName() {")
-                    w.appendLine("        val renderer = remember { $rendererFactoryFqcn() }")
-                    w.appendLine("        renderer.Render(Modifier, $pathLiteral,  $textLiteral)")
-                    w.appendLine("    }")
-                    w.appendLine()
                 }
+
+
 
             w.appendLine("}")
         }
@@ -134,14 +105,6 @@ class MarkdownComposeProcessor(
 
     override fun finish() {}
 }
-
-private fun String.literalEscaped(): String =
-    "\"${
-        this
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("\n", "\\n")
-    }\""
 
 
 @AutoService(SymbolProcessorProvider::class)

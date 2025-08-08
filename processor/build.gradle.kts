@@ -44,6 +44,7 @@ dependencies {
     testImplementation(libs.kotlin.compile.testing)
     testImplementation(libs.kotlin.compile.testing.ksp)
     testImplementation(kotlin("test"))
+    testImplementation(libs.mockk)
 }
 
 publishing {
