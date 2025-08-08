@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.projectArtifactsClasspathKey
-
 plugins {
     id("java-library")
     id("java-gradle-plugin")
@@ -16,7 +14,8 @@ gradlePlugin {
     plugins {
         create("processorPlugin") {
             id = "io.github.arashiyama11.composemark.processor"
-            implementationClass = "com.github.arashiyama11.processor.MarkdownComposeProcessor"
+            implementationClass =
+                "io.github.arashiyama11.composemark.processor.MarkdownComposeProcessor"
         }
     }
 }
@@ -32,9 +31,12 @@ kotlin {
     }
 }
 
-dependencies{
+dependencies {
     implementation(libs.symbol.processing.api)
-    implementation(project(":core"))
+    implementation(project(":core")) {
+        isTransitive = false
+    }
+
     implementation(libs.auto.service.annotations)
     ksp(libs.auto.service.ksp)
 

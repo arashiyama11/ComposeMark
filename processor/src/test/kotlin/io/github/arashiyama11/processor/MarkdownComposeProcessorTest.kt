@@ -2,33 +2,33 @@
 package io.github.arashiyama11.processor
 
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
-import com.tschuchort.compiletesting.*
-import org.gradle.internal.fingerprint.classpath.impl.ClasspathFingerprintingStrategy.compileClasspath
+import com.tschuchort.compiletesting.KotlinCompilation
+import com.tschuchort.compiletesting.SourceFile
+import com.tschuchort.compiletesting.kspSourcesDir
+import com.tschuchort.compiletesting.kspWithCompilation
+import com.tschuchort.compiletesting.symbolProcessorProviders
+import com.tschuchort.compiletesting.useKsp2
+import io.github.arashiyama11.composemark.processor.MarkdownComposeProcessorProvider
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import java.io.File
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 private fun kotlin(name: String, content: String): SourceFile =
     SourceFile.kotlin(name, content)
 
-private fun kotlin(path: String): SourceFile{
+private fun kotlin(path: String): SourceFile {
     val file = File("../core/src/commonMain/kotlin/io/github/arashiyama11/composemark/core/$path")
-    assertTrue(file.exists(), "File $path should exist in core/src/commonMain/kotlin/io/github/arashiyama11/composemark/core/")
+    assertTrue(
+        file.exists(),
+        "File $path should exist in core/src/commonMain/kotlin/io/github/arashiyama11/composemark/core/"
+    )
     return SourceFile.kotlin(file.name, file.readText())
 }
 
 class MarkdownComposeProcessorTest {
-
-    @Test
-    fun test(){
-        println(File(".").absolutePath)
-
-//        assertTrue(exists, "MarkdownRenderer.kt should exist in core/src/commonMain/kotlin/io/github/arashiyama11/composemark/core/")
-
-    }
-
-    /* ── Compose ダミー ── */
     private val composeRuntimeStub = kotlin(
         "ComposeRuntime.kt", """
         package androidx.compose.runtime
@@ -53,7 +53,15 @@ class MarkdownComposeProcessorTest {
         """.trimIndent()
     )
 
-    private val markdownRendererStub = kotlin("MarkdownRenderer.kt",)
+    private val composeUiStub = kotlin(
+        "Modifier.kt", """
+        |package androidx.compose.ui
+        |object Modifier
+    """.trimMargin()
+    )
+
+    private val markdownRendererStub = kotlin("MarkdownRenderer.kt")
+
     /* ── 注釈スタブ ── */
     private val generateContentsStub = kotlin("annotation/GenerateMarkdownContents.kt")
     private val generateMarkdownStub = kotlin("annotation/GenerateMarkdownComposable.kt")
@@ -71,14 +79,14 @@ class MarkdownComposeProcessorTest {
           
           
           
-          class renderer: MarkdownRenderer{
+          class Renderer: MarkdownRenderer{
             @Composable
-            override fun render(modifier: Modifier, path: String, source: String) {
+            override fun Render(modifier: Modifier, path: String?, source: String) {
               Text(source)
             }
           }
           
-          @GenerateMarkdownContents(renderer::class)
+          @GenerateMarkdownContents(Renderer::class)
           interface Contents {
             @Composable
             @GenerateMarkdownFromPath("README.md")
@@ -103,12 +111,13 @@ class MarkdownComposeProcessorTest {
                 generateContentsStub,
                 generateMarkdownStub,
                 markdownRendererStub,
+                composeUiStub,
                 contentsSrc
             )
             inheritClassPath = true
 
             symbolProcessorProviders += listOf(
-                MarkdownComposeProcessorProvider{
+                MarkdownComposeProcessorProvider {
                     "# README"
                 } as SymbolProcessorProvider
             )

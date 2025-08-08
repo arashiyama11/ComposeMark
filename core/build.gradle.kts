@@ -39,7 +39,6 @@ kotlin {
     }
 
 
-
     // For iOS targets, this is also where you should
     // configure native binary output. For more information, see:
     // https://kotlinlang.org/docs/multiplatform-build-native-binaries.html#build-xcframeworks
@@ -91,8 +90,23 @@ kotlin {
     }
 }
 
+
 publishing {
     publications {
+        named<MavenPublication>("kotlinMultiplatform") {
+            artifactId = "composemark-core"
+            pom {
+                name.set("ComposeMark Core")
+                description.set("Core of ComposeMark KSP processor")
+                licenses {
+                    license {
+                        name.set("Apache-2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0")
+                    }
+                }
+            }
+        }
+
         // Kotlin/MPP が自動で生成するすべての MavenPublication を取得
         withType<MavenPublication>().configureEach {
             pom {

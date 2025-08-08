@@ -1,4 +1,4 @@
-package io.github.arashiyama11.processor
+package io.github.arashiyama11.composemark.processor
 
 import com.google.auto.service.AutoService
 import com.google.devtools.ksp.processing.CodeGenerator
@@ -72,13 +72,17 @@ class MarkdownComposeProcessor(
         val rendererFactoryFqcn = rendererFactoryType.declaration.qualifiedName!!.asString()
 
         OutputStreamWriter(file, "UTF-8").use { w ->
+
             w.appendLine("package $pkg")
             w.appendLine()
-            w.appendLine("import $rendererFactoryFqcn")
+            ///w.appendLine("import javax.annotation.processing.Generated")
             w.appendLine("import androidx.compose.runtime.Composable")
             w.appendLine("import androidx.compose.ui.Modifier")
             w.appendLine("import androidx.compose.runtime.remember")
+            w.appendLine("import $rendererFactoryFqcn")
             w.appendLine()
+            ///w.appendLine("@file:Suppress(\"unused\")")
+            //w.appendLine("@Generated(\"io.github.arashiyama11.composemark.processor.MarkdownComposeProcessor\")")
             w.appendLine("object $implName : $className {")
             w.appendLine()
 

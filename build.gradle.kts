@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.androidLibrary) apply false
-    alias(libs.plugins.kotlinMultiplatform) apply  false
+    alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.vanniktech.mavenPublish) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
@@ -11,5 +11,5 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
 }
 
-rootProject.group = "io.github.arashiyama11.composemark"
-rootProject.version = "0.0.3-SNAPSHOT"
+rootProject.group = "io.github.arashiyama11"
+rootProject.version = "0.0.0-SNAPSHOT"
