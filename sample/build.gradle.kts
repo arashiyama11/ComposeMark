@@ -73,11 +73,8 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("org.jetbrains.skiko:skiko-awt:0.9.4.2")
 
-        //implementation(project(":core"))
-    implementation(project(":core")) {
-        exclude(group = "org.jetbrains.compose.ui", module = "ui-desktop")
-        exclude(group = "org.jetbrains.skiko",       module = "skiko")
-    }
+    //implementation(project(":core"))
+    implementation(project(":core"))
     ksp(project(":processor"))
 
     // Test
