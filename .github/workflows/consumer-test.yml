@@ -2,7 +2,10 @@ name: Consumer Test Workflow
 
 on:
   push:
+    branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
+  workflow_call:
 
 concurrency:
   group: consumer-test-${{ github.ref }}
