@@ -20,13 +20,19 @@ kotlin {
     explicitApi()
     jvm()
 
+    wasmJs {
+        browser {
+            binaries.executable()
+        }
+    }
+
     // Target declarations - add or remove as needed below. These define
     // which platforms this KMP module supports.
     // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
     androidLibrary {
         namespace = "io.github.arashiyama11.composemark.core"
         compileSdk = 36
-        minSdk = 26
+        minSdk = 21
 
         withHostTestBuilder {
         }
