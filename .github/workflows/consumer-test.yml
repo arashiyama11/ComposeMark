@@ -45,16 +45,22 @@ jobs:
           java-version: '17'
           cache: gradle
 
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant Gradle wrapper execute permission (root)
+        run: chmod +x gradlew
+
+      - name: Publish to Maven Local (root)
+        run: ./gradlew --stacktrace publishToMavenLocal
+
       - name: Set up Android SDK (Android only)
         if: matrix.task == 'assembleDebug'
         uses: android-actions/setup-android@v3
 
-      - name: Grant Gradle wrapper execute permission
+      - name: Grant Gradle wrapper execute permission (consumer-test)
         run: chmod +x gradlew
         working-directory: ${{ env.WORKDIR }}
-
-      - name: Warm Gradle deps cache
-        uses: gradle/actions/setup-gradle@v3
 
       - name: Run kspCommonMainKotlinMetadata
         run: ./gradlew --stacktrace kspCommonMainKotlinMetadata
