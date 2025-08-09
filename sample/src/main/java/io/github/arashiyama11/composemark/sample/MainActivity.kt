@@ -48,6 +48,8 @@ interface Contents {
     @GenerateMarkdownFromPath("README.md")
     fun Readme()
 
+    val contentsMap: Map<String, @Composable (Modifier) -> Unit>
+
     companion object : Contents by ContentsImpl
 }
 
