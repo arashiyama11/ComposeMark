@@ -58,7 +58,7 @@ private fun KSFunctionDeclaration.toFunctionIR(
 
         pathAnnotation != null -> {
             val path = pathAnnotation.path
-            val markdown = markdownLoader.load(path)
+            val markdown = with(logger) { markdownLoader.load(path) }
             SourceSpec.FromPath(path, markdown)
         }
 

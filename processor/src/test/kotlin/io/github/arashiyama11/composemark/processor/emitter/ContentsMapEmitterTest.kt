@@ -6,7 +6,7 @@ import io.github.arashiyama11.composemark.processor.model.ClassIR
 import io.github.arashiyama11.composemark.processor.model.FunctionIR
 import io.github.arashiyama11.composemark.processor.model.ParamIR
 import io.github.arashiyama11.composemark.processor.model.SourceSpec
-import org.junit.Test
+import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
 

@@ -1,6 +1,6 @@
-// file: MarkdownComposeProcessorTest.kt
 package io.github.arashiyama11.composemark.processor
 
+import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
@@ -15,8 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-private fun kotlin(name: String, content: String): SourceFile =
-    SourceFile.kotlin(name, content)
+private fun kotlin(name: String, content: String): SourceFile = SourceFile.kotlin(name, content)
 
 private fun kotlin(path: String): SourceFile {
     val file = File("../core/src/commonMain/kotlin/io/github/arashiyama11/composemark/core/$path")
@@ -28,6 +27,17 @@ private fun kotlin(path: String): SourceFile {
 }
 
 class MarkdownComposeProcessorTest {
+
+    private val mockMarkdownLoader: MarkdownLoader = object : MarkdownLoader {
+        context(logger: KSPLogger)
+        override fun load(path: String): String {
+            return when (path) {
+                "README.md" -> "This is a README file."
+                "LICENCE.md" -> "This is a licence file."
+                else -> throw IllegalArgumentException("Unknown path: $path")
+            }
+        }
+    }
     private val composeRuntimeStub = kotlin(
         "ComposeRuntime.kt", """
     package androidx.compose.runtime
@@ -95,7 +105,7 @@ import io.github.arashiyama11.composemark.core.MarkdownRenderer
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
-"""
+""".trimIndent()
 
     private val defaultRenderer = """
         
@@ -104,8 +114,17 @@ class Renderer: MarkdownRenderer {
     override fun Render(modifier: Modifier, path: String?, source: String) {
         Text(source)
     }
+    
+    @Composable
+    override fun InlineComposableWrapper(
+        modifier: Modifier,
+        source: String,
+        content: @Composable () -> Unit,
+    ) {
+        content()
+    }
 }
-"""
+""".trimIndent()
     private val mdcxContent = """
         start mdcx content
         <Composable>
@@ -173,7 +192,9 @@ class Renderer: MarkdownRenderer {
             inheritClassPath = true
 
             symbolProcessorProviders += listOf(
-                MarkdownComposeProcessorProvider { "Readme" } as SymbolProcessorProvider
+                MarkdownComposeProcessorProvider(
+                    mockMarkdownLoader
+                ) as SymbolProcessorProvider
             )
 
             messageOutputStream = System.out
@@ -193,7 +214,7 @@ class Renderer: MarkdownRenderer {
         return implFile.readText()
     }
 
-    
+
     @OptIn(ExperimentalCompilerApi::class)
     @Test
     fun `processor generates contents map when property declared`() {

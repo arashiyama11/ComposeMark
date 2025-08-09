@@ -16,14 +16,31 @@ import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownConten
 import io.github.arashiyama11.composemark.processor.analyzer.toClassIR
 import io.github.arashiyama11.composemark.processor.emitter.toFileSpec
 import java.io.File
+import java.io.FileNotFoundException
 
 
 fun interface MarkdownLoader {
+    context(logger: KSPLogger)
     fun load(path: String): String
 }
 
-class DefaultMarkdownLoader : MarkdownLoader {
-    override fun load(path: String): String = File(path).readText()
+class DefaultMarkdownLoader(
+    var rootPath: String? = null,
+) : MarkdownLoader {
+    context(logger: KSPLogger)
+    override fun load(path: String): String {
+        val file = if (rootPath != null) {
+            File(rootPath, path)
+        } else {
+            File(path)
+        }
+
+        if (!file.exists()) {
+            logger.error("Markdown file not found: ${file.absolutePath}")
+            throw FileNotFoundException()
+        }
+        return file.readText()
+    }
 }
 
 class MarkdownComposeProcessor(
@@ -63,13 +80,20 @@ class MarkdownComposeProcessor(
 
 @AutoService(SymbolProcessorProvider::class)
 class MarkdownComposeProcessorProvider(
-    private val markdownLoader: MarkdownLoader = DefaultMarkdownLoader()
+    private val markdownLoader: MarkdownLoader? = null
 ) : SymbolProcessorProvider {
+
+    // Default constructor for KSP to instantiate
+    constructor() : this(null)
+
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
+        val rootPath = environment.options["composemark.root.path"]
+        val loader = markdownLoader ?: DefaultMarkdownLoader(rootPath)
+
         return MarkdownComposeProcessor(
             codeGenerator = environment.codeGenerator,
             logger = environment.logger,
-            markdownLoader = markdownLoader
+            markdownLoader = loader
         )
     }
 }

@@ -31,9 +31,7 @@ Normal text is written as plain paragraphs.
 
 ## Links and Images
 
-[OpenAI](https://openai.com)
-
-![Sample Image](https://via.placeholder.com/150)
+![Sample Image](https://avatars.githubusercontent.com/u/96863644?s=400&v=4)
 
 ## Code
 

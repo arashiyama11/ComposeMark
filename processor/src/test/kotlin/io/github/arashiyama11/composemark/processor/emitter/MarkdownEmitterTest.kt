@@ -4,8 +4,8 @@ import io.github.arashiyama11.composemark.processor.model.ClassIR
 import io.github.arashiyama11.composemark.processor.model.FunctionIR
 import io.github.arashiyama11.composemark.processor.model.ParamIR
 import io.github.arashiyama11.composemark.processor.model.SourceSpec
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class MarkdownEmitterTest {
 
@@ -66,7 +66,9 @@ class MarkdownEmitterTest {
                 val renderer = remember { com.example.MyRenderer.Factory() }
                 Column(modifier = modifier) {
                   renderer.Render(Modifier, null, "Hello,")
-                  name
+                  renderer.InlineComposableWrapper(modifier = Modifier, source = "name") {
+                    name
+                  }
                   renderer.Render(Modifier, null, "!")
                 }
               }
