@@ -1,0 +1,83 @@
+# Jetpack Compose Basic Samples
+
+This document contains several basic Jetpack Compose examples.
+All code blocks are enclosed in `Composable` and use fully qualified names.
+
+
+<Composable>
+import androidx.compose.material3.Text
+import androidx.compose.material3.Button
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.LaunchedEffect
+</Composable>
+
+---
+
+## Text
+
+<Composable>
+    Text(text = "Hello, Compose!")
+</Composable>
+
+---
+
+## Button with State
+
+<Composable>
+    var count by remember { mutableStateOf(0) }
+    Column {
+        Text(text = "Count: ${count}")
+        Button(onClick = { count = count + 1 }) {
+            Text(text = "Increment")
+        }
+    }
+</Composable>
+
+---
+
+## Raw Layout
+<Composable>
+   Row {
+        Text(text = "Left")
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(text = "Right")
+    }
+</Composable>
+
+## Outlined TextField
+
+<Composable>
+    var textState by remember { mutableStateOf("") }
+    Column {
+        OutlinedTextField(
+            value = textState,
+            onValueChange = { newValue -> textState = newValue },
+            label = { Text(text = "Your name") }
+        )
+        Text(text = "Hello, ${textState}")
+    }
+</Composable>
+
+## Timer
+<Composable>
+var time by remember { mutableStateOf(0) }
+LaunchedEffect(Unit) {
+   while (true) {
+      time += 1
+      kotlinx.coroutines.delay(1000)
+   }
+}
+Text(text = "Time: ${time} seconds")
+</Composable>

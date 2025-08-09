@@ -192,4 +192,36 @@ class Renderer: MarkdownRenderer {
 
         return implFile.readText()
     }
+
+    
+    @OptIn(ExperimentalCompilerApi::class)
+    @Test
+    fun `processor generates contents map when property declared`() {
+        val src = contentImports + defaultRenderer + """
+          @GenerateMarkdownContents(Renderer::class)
+          interface Ctx {
+            @Composable
+            @GenerateMarkdownFromSource("Hello")
+            fun OnlyModifier(modifier: Modifier)
+
+            @Composable
+            @GenerateMarkdownFromSource("Hello")
+            fun WithArgs(modifier: Modifier, name: String)
+
+            val contents: Map<String, @Composable (Modifier) -> Unit>
+
+            companion object : Ctx by CtxImpl
+          }
+        """.trimIndent()
+
+        val text = getGeneratedFileContent(
+            source = src,
+            filename = "Ctx.kt"
+        )
+
+        // contents map exists and includes only the modifier-only function
+        kotlin.test.assertTrue(text.contains("override val contents"))
+        kotlin.test.assertTrue(text.contains("\"OnlyModifier\" to { OnlyModifier(it) }"))
+        kotlin.test.assertFalse(text.contains("\"WithArgs\" to"))
+    }
 }
