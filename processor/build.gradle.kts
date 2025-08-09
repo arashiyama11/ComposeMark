@@ -37,6 +37,9 @@ dependencies {
         isTransitive = false
     }
 
+
+    implementation(libs.kotlinpoet)
+    implementation(libs.kotlinpoet.ksp)
     implementation(libs.auto.service.annotations)
     ksp(libs.auto.service.ksp)
 
