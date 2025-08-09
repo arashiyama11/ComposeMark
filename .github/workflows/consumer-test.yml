@@ -1,0 +1,76 @@
+name: Consumer Test Workflow
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: consumer-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: JVM
+            os: ubuntu-latest
+            task: compileKotlinJvm
+          - name: WASM JS
+            os: ubuntu-latest
+            task: compileKotlinWasmJs
+          - name: Android
+            os: ubuntu-latest
+            task: assembleDebug
+          - name: iOS Simulator arm64
+            os: macos-14
+            task: compileKotlinIosSimulatorArm64
+
+    env:
+      WORKDIR: .github/consumer-test
+      GENERATED_FILE: .github/consumer-test/composeApp/build/generated/ksp/metadata/commonMain/kotlin/org/example/consumer/test/ContentsImpl.kt
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dkotlin.incremental=false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK (Android only)
+        if: matrix.task == 'assembleDebug'
+        uses: android-actions/setup-android@v3
+
+      - name: Grant Gradle wrapper execute permission
+        run: chmod +x gradlew
+        working-directory: ${{ env.WORKDIR }}
+
+      - name: Warm Gradle deps cache
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run kspCommonMainKotlinMetadata
+        run: ./gradlew --stacktrace kspCommonMainKotlinMetadata
+        working-directory: ${{ env.WORKDIR }}
+
+      - name: Run ${{ matrix.task }}
+        run: ./gradlew --stacktrace ${{ matrix.task }}
+        working-directory: ${{ env.WORKDIR }}
+
+      - name: Verify generated file exists
+        shell: bash
+        run: |
+          if [[ -f "$GENERATED_FILE" ]]; then
+            echo "✅ Found: $GENERATED_FILE"
+          else
+            echo "❌ Missing: $GENERATED_FILE"
+            ls -la "$(dirname "$GENERATED_FILE")" || true
+            exit 1
+          fi
