@@ -1,5 +1,5 @@
 // file: MarkdownComposeProcessorTest.kt
-package io.github.arashiyama11.processor
+package io.github.arashiyama11.composemark.processor
 
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -8,7 +8,6 @@ import com.tschuchort.compiletesting.kspSourcesDir
 import com.tschuchort.compiletesting.kspWithCompilation
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import com.tschuchort.compiletesting.useKsp2
-import io.github.arashiyama11.composemark.processor.MarkdownComposeProcessorProvider
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import java.io.File
@@ -130,10 +129,10 @@ class Renderer: MarkdownRenderer {
             fun Readme()
             
             @Composable
-            @GenerateMarkdownFromSource($tripleDoubleQ $mdcxContent$tripleDoubleQ)
+            @GenerateMarkdownFromSource(${tripleDoubleQ}${mdcxContent}${tripleDoubleQ})
             fun Licence(modifier: Modifier = Modifier)
             
-            val contentsMap: Map<String, @Composable (Modifier) -> Unit>
+            //val contentsMap: Map<String, @Composable (Modifier) -> Unit>
             
             companion object : Contents by ContentsImpl
           }
