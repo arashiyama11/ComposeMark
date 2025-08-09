@@ -63,6 +63,24 @@ inline fun <T> remember(calculation: () -> T): T = calculation()
     """.trimMargin()
     )
 
+    private val layoutStub = kotlin(
+        "Layout.kt", """
+        package androidx.compose.foundation.layout
+        import androidx.compose.runtime.Composable
+        import androidx.compose.ui.Modifier
+        @Composable fun Box(modifier: Modifier, content: @Composable () -> Unit) {
+            content()
+        }
+        
+        @Composable fun Column(
+            modifier: Modifier = Modifier,
+            content: @Composable () -> Unit
+        ) {
+            content()
+        }
+    """.trimIndent()
+    )
+
     private val markdownRendererStub = kotlin("MarkdownRenderer.kt")
 
     /* ── 注釈スタブ ── */
@@ -89,15 +107,16 @@ class Renderer: MarkdownRenderer {
     }
 }
 """
+    private val mdcxContent = """
+        start mdcx content
+        <Composable>
+            val text = "Hello, World!"
+            androidx.compose.material3.Text(text)
+        </Composable>
+        end mdcx content
+    """.trimIndent()
 
-    /* ── テスト対象 ── */
-    private val contentsSrc = kotlin(
-        "Contents.kt",
-        """
-         
-          
-        """.trimIndent()
-    )
+    val tripleDoubleQ = "\"\"\""
 
     @OptIn(ExperimentalCompilerApi::class)
     @Test
@@ -111,7 +130,7 @@ class Renderer: MarkdownRenderer {
             fun Readme()
             
             @Composable
-            @GenerateMarkdownFromSource("Apache License 2.0")
+            @GenerateMarkdownFromSource($tripleDoubleQ $mdcxContent$tripleDoubleQ)
             fun Licence(modifier: Modifier = Modifier)
             
             val contentsMap: Map<String, @Composable (Modifier) -> Unit>
@@ -149,12 +168,13 @@ class Renderer: MarkdownRenderer {
                 generateMarkdownStub,
                 markdownRendererStub,
                 composeUiStub,
+                layoutStub,
                 src
             )
             inheritClassPath = true
 
             symbolProcessorProviders += listOf(
-                MarkdownComposeProcessorProvider { source } as SymbolProcessorProvider
+                MarkdownComposeProcessorProvider { "Readme" } as SymbolProcessorProvider
             )
 
             messageOutputStream = System.out
