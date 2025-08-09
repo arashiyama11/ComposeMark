@@ -151,3 +151,6 @@ compose.desktop {
     }
 }
 
+ksp {
+    arg("composemark.root.path", "${rootProject.projectDir}/mdcx")
+}

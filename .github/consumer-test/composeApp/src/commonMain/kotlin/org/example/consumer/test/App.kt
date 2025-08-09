@@ -153,11 +153,11 @@ class MyMarkdownRenderer : MarkdownRenderer {
 @GenerateMarkdownContents(MyMarkdownRenderer::class)
 interface Contents {
     @Composable
-    @GenerateMarkdownFromPath("mdcx/PLAIN.md")
+    @GenerateMarkdownFromPath("PLAIN.md")
     fun PlainMarkdown()
 
     @Composable
-    @GenerateMarkdownFromPath("mdcx/Compose.mdcx")
+    @GenerateMarkdownFromPath("Compose.mdcx")
     fun Compose()
 
 

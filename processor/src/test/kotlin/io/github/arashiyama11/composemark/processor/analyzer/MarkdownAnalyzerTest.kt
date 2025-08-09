@@ -17,8 +17,8 @@ import com.tschuchort.compiletesting.symbolProcessorProviders
 import com.tschuchort.compiletesting.useKsp2
 import io.github.arashiyama11.composemark.processor.MarkdownLoader
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
-import org.junit.Test
 import java.io.File
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -88,14 +88,14 @@ class MarkdownAnalyzerTest {
             
             @GenerateMarkdownContents(Renderer::class)
             interface Doc {
-                @Composable @GenerateMarkdownFromPath("doc.md") fun PathCase()
+                @Composable @GenerateMarkdownFromPath("doc.md") fun PathCase() 
                 @Composable @GenerateMarkdownFromSource("Hello") fun SourceCase(modifier: Modifier)
                 val contents: Map<String, @Composable (Modifier) -> Unit>
             }
         """.trimIndent()
 
         val probeData = runProbe(source)
-        // 形式: package|interface|impl|rendererFqcn|contentsProp|fn:name:type:accepts;...
+        // 形式: package|interface|impl|rendererFqcn|contentsProp|fn:name:type:accepts;
         val parts = probeData.split("|")
         assertEquals("test", parts[0])
         assertEquals("Doc", parts[1])
