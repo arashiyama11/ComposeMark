@@ -45,7 +45,7 @@ class MarkdownComposeProcessor(
                     fileSpec.writeTo(
                         codeGenerator = codeGenerator,
                         dependencies = Dependencies(
-                            aggregating = false,
+                            aggregating = true,
                             sources = arrayOf(classDeclaration.containingFile!!)
                         )
                     )

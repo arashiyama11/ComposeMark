@@ -9,3 +9,19 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.ksp) apply false
 }
+
+
+// 監視したいMarkdownの場所を合わせてね
+val markdownDirs = listOf(
+    layout.projectDirectory.dir("mdcx"),
+)
+
+
+tasks.matching { it.name.startsWith("ksp") }.configureEach {
+    // 例: kspCommonMainKotlinMetadata, kspKotlinJvm, kspWasmJs など全てに効く
+    markdownDirs.forEach { d ->
+        inputs.dir(d)
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+            .withPropertyName("kspExtraInputs_${d.asFile.name}")
+    }
+}

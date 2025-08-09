@@ -12,4 +12,4 @@ plugins {
 }
 
 rootProject.group = "io.github.arashiyama11"
-rootProject.version = "0.0.1-SNAPSHOT"
+rootProject.version = "0.0.2-SNAPSHOT"
