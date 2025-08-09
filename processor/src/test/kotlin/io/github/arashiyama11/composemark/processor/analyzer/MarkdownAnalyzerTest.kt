@@ -1,6 +1,12 @@
 package io.github.arashiyama11.composemark.processor.analyzer
 
-import com.google.devtools.ksp.processing.*
+import com.google.devtools.ksp.processing.CodeGenerator
+import com.google.devtools.ksp.processing.Dependencies
+import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.processing.Resolver
+import com.google.devtools.ksp.processing.SymbolProcessor
+import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
+import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -9,7 +15,6 @@ import com.tschuchort.compiletesting.kspSourcesDir
 import com.tschuchort.compiletesting.kspWithCompilation
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import com.tschuchort.compiletesting.useKsp2
-import com.squareup.kotlinpoet.ksp.writeTo
 import io.github.arashiyama11.composemark.processor.MarkdownLoader
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
@@ -72,6 +77,13 @@ class MarkdownAnalyzerTest {
             
             class Renderer: MarkdownRenderer {
                 @Composable override fun Render(modifier: Modifier, path: String?, source: String) {}
+                @Composable override fun InlineComposableWrapper(
+                    modifier: Modifier,
+                    source: String,
+                    content: @Composable () -> Unit
+                ) {
+                    content()
+                }
             }
             
             @GenerateMarkdownContents(Renderer::class)
@@ -156,7 +168,8 @@ private class AnalyzerProbeProcessor(
         val symbols = resolver.getSymbolsWithAnnotation(
             "io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents"
         )
-        val classDecl = symbols.filterIsInstance<KSClassDeclaration>().firstOrNull() ?: return emptyList()
+        val classDecl =
+            symbols.filterIsInstance<KSClassDeclaration>().firstOrNull() ?: return emptyList()
         val ir = classDecl.toClassIR(loader, logger)
 
         val fnSummary = buildString {
@@ -165,7 +178,8 @@ private class AnalyzerProbeProcessor(
                     is io.github.arashiyama11.composemark.processor.model.SourceSpec.FromPath -> "FromPath"
                     is io.github.arashiyama11.composemark.processor.model.SourceSpec.FromSource -> "FromSource"
                 }
-                append(f.name).append(":").append(type).append(":").append(f.acceptsModifier).append(";")
+                append(f.name).append(":").append(type).append(":").append(f.acceptsModifier)
+                    .append(";")
             }
         }
         val content = listOf(

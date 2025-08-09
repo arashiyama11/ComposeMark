@@ -74,7 +74,13 @@ private fun emitSectionsRender(
             }
 
             is MarkdownSection.Composable -> {
-                builder.addStatement("%L", section.content)
+                builder.beginControlFlow(
+                    "renderer.InlineComposableWrapper(modifier = %L, source = %S)",
+                    modifierParamName,
+                    section.content.trim()
+                )
+                builder.addStatement("%L", section.content.trim())
+                builder.endControlFlow()
             }
         }
     } else {
@@ -91,7 +97,13 @@ private fun emitSectionsRender(
                 }
 
                 is MarkdownSection.Composable -> {
-                    builder.addStatement("%L", section.content)
+                    builder.beginControlFlow(
+                        "renderer.InlineComposableWrapper(modifier = %T, source = %S)",
+                        modifierClassName,
+                        section.content.trim()
+                    )
+                    builder.addStatement("%L", section.content.trim())
+                    builder.endControlFlow()
                 }
             }
         }

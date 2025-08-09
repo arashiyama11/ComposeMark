@@ -23,51 +23,52 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.LaunchedEffect
 </Composable>
 
----
 
 ## Text
 
 <Composable>
-    Text(text = "Hello, Compose!")
+//!SampleCode
+Text(text = "Hello, Compose!")
 </Composable>
 
----
 
 ## Button with State
 
 <Composable>
-    var count by remember { mutableStateOf(0) }
-    Column {
-        Text(text = "Count: ${count}")
-        Button(onClick = { count = count + 1 }) {
-            Text(text = "Increment")
-        }
+//!SampleCode
+var count by remember { mutableStateOf(0) }
+Column {
+    Text(text = "Count: $count")
+    Button(onClick = { count = count + 1}) {
+        Text(text = "Increment!!!")
     }
+}
 </Composable>
 
----
 
 ## Raw Layout
 <Composable>
-   Row {
-        Text(text = "Left")
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(text = "Right")
-    }
+//!SampleCode
+Row {
+    Text(text = "Left")
+    Spacer(modifier = Modifier.width(16.dp))
+    Text(text = "Right")
+}
 </Composable>
 
 ## Outlined TextField
 
 <Composable>
-    var textState by remember { mutableStateOf("") }
-    Column {
-        OutlinedTextField(
-            value = textState,
-            onValueChange = { newValue -> textState = newValue },
-            label = { Text(text = "Your name") }
-        )
-        Text(text = "Hello, ${textState}")
-    }
+//!SampleCode
+var textState by remember { mutableStateOf("") }
+Column {
+    OutlinedTextField(
+        value = textState,
+        onValueChange = { newValue -> textState = newValue },
+        label = { Text(text = "Your name") }
+    )
+    Text(text = "Hello, ${textState}")
+}
 </Composable>
 
 ## Timer

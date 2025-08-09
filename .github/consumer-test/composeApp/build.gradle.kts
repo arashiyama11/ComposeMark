@@ -76,6 +76,8 @@ kotlin {
 
             implementation(libs.composemark.core)
             implementation(libs.multiplatform.markdown.renderer)
+            implementation(libs.multiplatform.markdown.renderer.coil3)
+            implementation(libs.multiplatform.markdown.renderer.code)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

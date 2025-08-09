@@ -1,22 +1,26 @@
 package org.example.consumer.test
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,9 +28,14 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.compose.LocalMarkdownColors
 import com.mikepenz.markdown.compose.LocalMarkdownTypography
 import com.mikepenz.markdown.compose.Markdown
+import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.compose.elements.highlightedCodeBlock
+import com.mikepenz.markdown.compose.elements.highlightedCodeFence
+import com.mikepenz.markdown.model.ImageTransformer
 import com.mikepenz.markdown.model.MarkdownColors
 import com.mikepenz.markdown.model.MarkdownTypography
 import io.github.arashiyama11.composemark.core.MarkdownRenderer
@@ -43,15 +52,17 @@ fun App() {
         LocalMarkdownColors provides rememberMarkdownColors()
     ) {
         MaterialTheme {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize().padding(horizontal = 48.dp)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Contents.Compose()
-                Spacer(modifier = Modifier.height(16.dp))
-                Contents.PlainMarkdown()
+            SelectionContainer {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize().padding(horizontal = 48.dp)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Contents.Compose()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Contents.PlainMarkdown()
+                }
             }
         }
     }
@@ -59,12 +70,81 @@ fun App() {
 
 
 class MyMarkdownRenderer : MarkdownRenderer {
+
+    @Composable
+    fun SampleCode(
+        modifier: Modifier,
+        source: String,
+        content: @Composable (() -> Unit)
+    ) {
+        Row(
+            modifier = modifier.height(IntrinsicSize.Min)
+                .border(1.dp, Color.Black, RoundedCornerShape(8.dp)),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier.weight(1f).padding(8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                content()
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+
+            VerticalDivider(
+                modifier = Modifier.fillMaxHeight(0.8f),
+                color = Color.Gray,
+                thickness = 1.dp,
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
+            Box(
+                modifier = Modifier.weight(1f)
+                    .padding(8.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = source,
+                    style = LocalMarkdownTypography.current.inlineCode,
+                )
+            }
+        }
+    }
+
+    @Composable
+    override fun InlineComposableWrapper(
+        modifier: Modifier,
+        source: String,
+        content: @Composable (() -> Unit)
+    ) {
+        when (source.lineSequence().first()) {
+            "//!SampleCode" -> {
+                SampleCode(
+                    modifier = modifier.padding(8.dp),
+                    source = source.lineSequence().drop(1).joinToString("\n"),
+                    content = content
+                )
+            }
+
+            else -> {
+                content()
+            }
+        }
+    }
+
+
     @Composable
     override fun Render(modifier: Modifier, path: String?, source: String) {
+
         Markdown(
             content = source,
             colors = LocalMarkdownColors.current,
-            typography = LocalMarkdownTypography.current
+            typography = LocalMarkdownTypography.current,
+            modifier = Modifier,
+            imageTransformer = Coil3ImageTransformerImpl,
+            components = markdownComponents(
+                codeBlock = highlightedCodeBlock,
+                codeFence = highlightedCodeFence
+            )
         )
     }
 }

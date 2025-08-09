@@ -40,6 +40,15 @@ class MyMarkdownRenderer : MarkdownRenderer {
     override fun Render(modifier: Modifier, path: String?, source: String) {
         Text(text = source, modifier = modifier)
     }
+
+    @Composable
+    override fun InlineComposableWrapper(
+        modifier: Modifier,
+        source: String,
+        content: @Composable () -> Unit,
+    ) {
+        content()
+    }
 }
 
 @GenerateMarkdownContents(MyMarkdownRenderer::class)

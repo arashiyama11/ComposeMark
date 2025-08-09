@@ -66,7 +66,9 @@ class MarkdownEmitterTest {
                 val renderer = remember { com.example.MyRenderer.Factory() }
                 Column(modifier = modifier) {
                   renderer.Render(Modifier, null, "Hello,")
-                  name
+                  renderer.InlineComposableWrapper(modifier = Modifier, source = "name") {
+                    name
+                  }
                   renderer.Render(Modifier, null, "!")
                 }
               }

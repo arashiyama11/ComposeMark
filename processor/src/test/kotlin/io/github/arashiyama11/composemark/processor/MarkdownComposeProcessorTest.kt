@@ -104,6 +104,15 @@ class Renderer: MarkdownRenderer {
     override fun Render(modifier: Modifier, path: String?, source: String) {
         Text(source)
     }
+    
+    @Composable
+    override fun InlineComposableWrapper(
+        modifier: Modifier,
+        source: String,
+        content: @Composable () -> Unit,
+    ) {
+        content()
+    }
 }
 """
     private val mdcxContent = """
@@ -193,7 +202,7 @@ class Renderer: MarkdownRenderer {
         return implFile.readText()
     }
 
-    
+
     @OptIn(ExperimentalCompilerApi::class)
     @Test
     fun `processor generates contents map when property declared`() {
