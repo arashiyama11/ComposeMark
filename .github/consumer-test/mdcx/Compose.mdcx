@@ -3,12 +3,32 @@
 This document contains several basic Jetpack Compose examples.
 All code blocks are enclosed in `Composable` and use fully qualified names.
 
+
+<Composable>
+import androidx.compose.material3.Text
+import androidx.compose.material3.Button
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.LaunchedEffect
+</Composable>
+
 ---
 
 ## Text
 
 <Composable>
-    androidx.compose.material3.Text(text = "Hello, Compose!")
+    Text(text = "Hello, Compose!")
 </Composable>
 
 ---
@@ -16,11 +36,11 @@ All code blocks are enclosed in `Composable` and use fully qualified names.
 ## Button with State
 
 <Composable>
-    val count = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(0) }
-    androidx.compose.foundation.layout.Column {
-        androidx.compose.material3.Text(text = "Count: ${count.value}")
-        androidx.compose.material3.Button(onClick = { count.value = count.value + 1 }) {
-            androidx.compose.material3.Text(text = "Increment")
+    var count by remember { mutableStateOf(0) }
+    Column {
+        Text(text = "Count: ${count}")
+        Button(onClick = { count = count + 1 }) {
+            Text(text = "Increment")
         }
     }
 </Composable>
@@ -29,23 +49,35 @@ All code blocks are enclosed in `Composable` and use fully qualified names.
 
 ## Raw Layout
 <Composable>
-   androidx.compose.foundation.layout.Row {
-        androidx.compose.material3.Text(text = "Left")
-        androidx.compose.foundation.layout.Spacer(modifier = androidx.compose.ui.Modifier)
-        androidx.compose.material3.Text(text = "Right")
+   Row {
+        Text(text = "Left")
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(text = "Right")
     }
 </Composable>
 
 ## Outlined TextField
 
 <Composable>
-    val textState = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
-    androidx.compose.foundation.layout.Column {
-        androidx.compose.material3.OutlinedTextField(
-            value = textState.value,
-            onValueChange = { newValue -> textState.value = newValue },
-            label = { androidx.compose.material3.Text(text = "Your name") }
+    var textState by remember { mutableStateOf("") }
+    Column {
+        OutlinedTextField(
+            value = textState,
+            onValueChange = { newValue -> textState = newValue },
+            label = { Text(text = "Your name") }
         )
-        androidx.compose.material3.Text(text = "Hello, ${textState.value}")
+        Text(text = "Hello, ${textState}")
     }
+</Composable>
+
+## Timer
+<Composable>
+var time by remember { mutableStateOf(0) }
+LaunchedEffect(Unit) {
+   while (true) {
+      time += 1
+      kotlinx.coroutines.delay(1000)
+   }
+}
+Text(text = "Time: ${time} seconds")
 </Composable>

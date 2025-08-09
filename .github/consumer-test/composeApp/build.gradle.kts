@@ -75,7 +75,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
 
             implementation(libs.composemark.core)
-            //ksp(libs.composemark.processor)
+            implementation(libs.multiplatform.markdown.renderer)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
