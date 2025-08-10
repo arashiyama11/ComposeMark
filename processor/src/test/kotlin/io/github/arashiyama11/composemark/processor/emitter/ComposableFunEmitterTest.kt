@@ -4,7 +4,7 @@ import com.squareup.kotlinpoet.FileSpec
 import io.github.arashiyama11.composemark.processor.model.FunctionIR
 import io.github.arashiyama11.composemark.processor.model.ParamIR
 import io.github.arashiyama11.composemark.processor.model.SourceSpec
-import org.junit.Test
+import kotlin.test.Test
 import kotlin.test.assertContains
 
 class ComposableFunEmitterTest {
@@ -67,4 +67,3 @@ class ComposableFunEmitterTest {
         assertContains(out, "B")
     }
 }
-
