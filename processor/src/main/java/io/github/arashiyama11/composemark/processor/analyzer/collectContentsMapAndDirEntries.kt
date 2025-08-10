@@ -50,7 +50,6 @@ internal fun collectContentsMapAndDirEntries(
         Files.list(targetDir).filter { Files.isRegularFile(it) }.collect(Collectors.toList())
 
     val selected = paths.filter { p ->
-        println("test : $p")
         (includeMatchers.isEmpty() || matchesAny(targetDir, p, includeMatchers)) &&
                 (excludeMatchers.isEmpty() || !matchesAny(targetDir, p, excludeMatchers))
     }
@@ -63,26 +62,38 @@ internal fun collectContentsMapAndDirEntries(
     val entries = mutableListOf<DirectoryEntryIR>()
     val seenKeys = mutableSetOf<String>()
 
-    selected.sortedBy { it.toString() }.forEach { path ->
-        val rel = base.relativize(path).toString().replace(File.separatorChar, '/')
-        val fileName = path.fileName.toString()
-        val stem = fileName.substringBeforeLast('.')
+    selected.distinctBy { it.toString() }.sortedBy { it.toString() }.forEach { path ->
+        val relFromBase = base.relativize(path).toString().replace(File.separatorChar, '/')
+        val stem = path.fileName.toString().substringBeforeLast('.')
         val key = stem.replace(Regex("[^A-Za-z0-9]"), "_")
         if (!seenKeys.add(key)) {
-            logger.error("ディレクトリエントリのキーが衝突しました: $key", prop)
-            throw IllegalStateException("duplicate key: $key")
+            logger.error("ディレクトリエントリのキーが衝突しました: ${key}", prop)
+            throw IllegalStateException("duplicate key: ${key}")
         }
-        val markdown = with(logger) { markdownLoader.load(rel) }
+        val markdown = with(logger) { markdownLoader.load(relFromBase) }
+        val funName = toFunctionNameFromStem(stem)
         entries += DirectoryEntryIR(
             key = key,
-            relativePath = rel,
-            source = SourceSpec.FromPath(rel, markdown)
+            relativePath = relFromBase,
+            source = SourceSpec.FromPath(relFromBase, markdown),
+            functionName = funName,
         )
     }
 
     return propName to entries
 }
 
+
+private fun toFunctionNameFromStem(stem: String): String {
+    val parts = stem.split(Regex("[^A-Za-z0-9]+"))
+        .filter { it.isNotBlank() }
+    var name = parts.joinToString(separator = "") { p ->
+        p.substring(0, 1).uppercase() + p.substring(1)
+    }
+    if (name.isEmpty()) name = "Doc"
+    if (name.first().isDigit()) name = "Doc${name}"
+    return name
+}
 
 private fun findContentsMapDeclaration(classDeclaration: KSClassDeclaration): KSPropertyDeclaration? {
     return classDeclaration.getAllProperties().firstOrNull { prop ->

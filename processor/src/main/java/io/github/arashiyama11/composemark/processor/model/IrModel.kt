@@ -14,7 +14,8 @@ data class FunctionIR(
     val name: String,
     val parameters: List<ParamIR>,
     val source: SourceSpec,
-    val acceptsModifier: Boolean
+    val acceptsModifier: Boolean,
+    val isOverride: Boolean = true,
 )
 
 data class ParamIR(
@@ -31,4 +32,5 @@ data class DirectoryEntryIR(
     val key: String,
     val relativePath: String,
     val source: SourceSpec.FromPath,
+    val functionName: String,
 )

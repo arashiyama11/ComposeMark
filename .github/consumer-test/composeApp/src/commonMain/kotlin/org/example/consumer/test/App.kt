@@ -41,6 +41,7 @@ import com.mikepenz.markdown.model.MarkdownTypography
 import io.github.arashiyama11.composemark.core.MarkdownRenderer
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
+import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromDirectory
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromPath
 
 @Composable
@@ -59,9 +60,10 @@ fun App() {
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Contents.Compose()
                     Spacer(modifier = Modifier.height(16.dp))
-                    Contents.PlainMarkdown()
+                    Contents.contentsMap.forEach { (name, content) ->
+                        content(Modifier)
+                    }
                 }
             }
         }
@@ -151,8 +153,13 @@ class MyMarkdownRenderer : MarkdownRenderer {
 
 
 @GenerateMarkdownContents(MyMarkdownRenderer::class)
+
 interface Contents {
-    @Composable
+
+    @GenerateMarkdownFromDirectory(".", includes = [], excludes = [])
+    val contentsMap: Map<String, @Composable (Modifier) -> Unit>
+
+    /*@Composable
     @GenerateMarkdownFromPath("PLAIN.md")
     fun PlainMarkdown()
 
@@ -161,7 +168,7 @@ interface Contents {
     fun Compose()
 
 
-    val contentsMap: Map<String, @Composable (Modifier) -> Unit>
+    val contentsMap: Map<String, @Composable (Modifier) -> Unit>*/
 
     companion object : Contents by ContentsImpl
 }

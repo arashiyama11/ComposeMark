@@ -14,7 +14,7 @@ fun FunctionIR.toComposableFun(rendererFactoryFqcn: String): FunSpec {
     val rememberMember = MemberName("androidx.compose.runtime", "remember")
 
     val funSpec = FunSpec.builder(this.name)
-        .addModifiers(KModifier.OVERRIDE)
+        .apply { if (this@toComposableFun.isOverride) addModifiers(KModifier.OVERRIDE) }
         .addAnnotation(composableAnnotation)
         .returns(Unit::class)
 

@@ -34,8 +34,10 @@ fun ClassIR.toContentsMapProperty(): PropertySpec {
         .addStatement("mapOf(")
         .indent()
 
+    // 抽象関数に対する実装（isOverride=true）のみをcontentsMapへ登録し、
+    // ディレクトリ由来の自動生成関数（isOverride=false）は下のdirectoryEntries側で登録する。
     this.functions
-        .filter { it.acceptsModifier && it.parameters.size == 1 }
+        .filter { it.isOverride && it.acceptsModifier && it.parameters.size == 1 }
         .forEach { function ->
             val key = function.name
             initializer.addStatement("%S to { %N(it) },", key, function.name)
@@ -45,11 +47,9 @@ fun ClassIR.toContentsMapProperty(): PropertySpec {
     if (this.directoryEntries.isNotEmpty()) {
         this.directoryEntries.forEach { entry ->
             initializer.addStatement(
-                "%S to { modifier -> %L().Render(modifier, %S, %S) },",
+                "%S to { %N(it) },",
                 entry.key,
-                this.rendererFactoryFqcn,
-                entry.relativePath,
-                entry.source.markdownLiteral
+                entry.functionName,
             )
         }
     }
