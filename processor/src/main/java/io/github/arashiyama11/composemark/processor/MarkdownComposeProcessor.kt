@@ -46,7 +46,8 @@ class DefaultMarkdownLoader(
 class MarkdownComposeProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
-    private val markdownLoader: MarkdownLoader
+    private val markdownLoader: MarkdownLoader,
+    private val rootPath: String?
 ) : SymbolProcessor {
 
     private val generatedFqcns = mutableSetOf<String>()
@@ -59,7 +60,7 @@ class MarkdownComposeProcessor(
             .filterIsInstance<KSClassDeclaration>()
             .forEach { classDeclaration ->
                 try {
-                    val classIR = classDeclaration.toClassIR(markdownLoader, logger)
+                    val classIR = classDeclaration.toClassIR(markdownLoader, logger, rootPath)
                     val fqcn = classIR.packageName + "." + classIR.implName
 
                     // 同一ラウンドでの重複を検出
@@ -109,7 +110,8 @@ class MarkdownComposeProcessorProvider(
         return MarkdownComposeProcessor(
             codeGenerator = environment.codeGenerator,
             logger = environment.logger,
-            markdownLoader = loader
+            markdownLoader = loader,
+            rootPath = rootPath
         )
     }
 }

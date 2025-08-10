@@ -41,6 +41,19 @@ fun ClassIR.toContentsMapProperty(): PropertySpec {
             initializer.addStatement("%S to { %N(it) },", key, function.name)
         }
 
+    // Directory-based entries
+    if (this.directoryEntries.isNotEmpty()) {
+        this.directoryEntries.forEach { entry ->
+            initializer.addStatement(
+                "%S to { modifier -> %L().Render(modifier, %S, %S) },",
+                entry.key,
+                this.rendererFactoryFqcn,
+                entry.relativePath,
+                entry.source.markdownLiteral
+            )
+        }
+    }
+
     initializer.unindent().addStatement(")")
 
     return PropertySpec.builder(this.contentsPropertyName!!, mapType)

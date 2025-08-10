@@ -7,6 +7,7 @@ data class ClassIR(
     val rendererFactoryFqcn: String,
     val functions: List<FunctionIR>,
     val contentsPropertyName: String?,
+    val directoryEntries: List<DirectoryEntryIR> = emptyList(),
 )
 
 data class FunctionIR(
@@ -25,3 +26,9 @@ sealed interface SourceSpec {
     data class FromPath(val path: String, val markdownLiteral: String) : SourceSpec
     data class FromSource(val markdownLiteral: String) : SourceSpec
 }
+
+data class DirectoryEntryIR(
+    val key: String,
+    val relativePath: String,
+    val source: SourceSpec.FromPath,
+)
