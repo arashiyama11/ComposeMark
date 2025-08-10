@@ -18,7 +18,11 @@ fun KSClassDeclaration.toClassIR(markdownLoader: MarkdownLoader, logger: KSPLogg
     val annotationGMC = annotations.first { it.shortName.asString() == "GenerateMarkdownContents" }
     val packageName = this.packageName.asString()
     val interfaceName = this.simpleName.asString()
-    val implName = "${interfaceName}Impl"
+    val rawImplNameArg = annotationGMC.arguments
+        .firstOrNull { it.name?.asString() == "implName" }
+        ?.value as? String ?: ""
+
+    val implName = resolveImplName(interfaceName, rawImplNameArg, logger, this)
     val functions = getAllFunctions()
         .filter { it.isAbstract }
         .map { it.toFunctionIR(markdownLoader, logger) }
@@ -41,6 +45,35 @@ fun KSClassDeclaration.toClassIR(markdownLoader: MarkdownLoader, logger: KSPLogg
         functions = functions,
         contentsPropertyName = contentsPropertyName
     )
+}
+
+private val KOTLIN_KEYWORDS = setOf(
+    "as","break","class","continue","do","else","false","for","fun","if","in","interface","is","null","object","package","return","super","this","throw","true","try","typealias","val","var","when","while"
+)
+
+@OptIn(KspExperimental::class)
+private fun resolveImplName(
+    interfaceName: String,
+    implNameArg: String,
+    logger: KSPLogger,
+    node: KSClassDeclaration,
+): String {
+    val trimmed = implNameArg.trim()
+    if (trimmed.isEmpty()) return "${interfaceName}Impl"
+
+    val regex = Regex("^[A-Z][A-Za-z0-9_]*$")
+    if (!regex.matches(trimmed)) {
+        logger.error(
+            "implName が不正です。形式: ^[A-Z][A-Za-z0-9_]*$、予約語不可。例: MyImpl",
+            node
+        )
+        throw IllegalArgumentException("Invalid implName: $trimmed")
+    }
+    if (trimmed in KOTLIN_KEYWORDS) {
+        logger.error("implName に予約語は使用できません: $trimmed", node)
+        throw IllegalArgumentException("Keyword implName: $trimmed")
+    }
+    return trimmed
 }
 
 @OptIn(KspExperimental::class)

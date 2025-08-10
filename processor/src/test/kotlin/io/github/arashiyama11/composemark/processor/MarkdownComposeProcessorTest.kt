@@ -168,6 +168,58 @@ class Renderer: MarkdownRenderer {
         assertTrue(text.contains("override fun Readme"))
     }
 
+    @OptIn(ExperimentalCompilerApi::class)
+    @Test
+    fun `processor respects implName override`() {
+        val src = contentImports + defaultRenderer + """
+          @GenerateMarkdownContents(Renderer::class, implName = "ContentsCustom")
+          interface Contents {
+            @Composable
+            @GenerateMarkdownFromSource("Hello")
+            fun Hello()
+            
+            companion object : Contents by ContentsCustom
+          }
+        """.trimIndent()
+
+        val compilation = KotlinCompilation().apply {
+            useKsp2()
+            kspWithCompilation = true
+
+            sources = listOf(
+                composeRuntimeStub,
+                composeMaterialStub,
+                generateContentsStub,
+                generateMarkdownStub,
+                markdownRendererStub,
+                composeUiStub,
+                layoutStub,
+                kotlin("Contents.kt", src)
+            )
+            inheritClassPath = true
+
+            symbolProcessorProviders += listOf(
+                MarkdownComposeProcessorProvider(
+                    mockMarkdownLoader
+                ) as SymbolProcessorProvider
+            )
+
+            messageOutputStream = System.out
+        }
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val implFile = compilation.kspSourcesDir
+            .resolve("kotlin")
+            .walk()
+            .firstOrNull { it.name == "ContentsCustom.kt" }
+
+        assertNotNull(implFile, "ContentsCustom.kt should be generated")
+        val text = implFile.readText()
+        assertTrue(text.contains("object ContentsCustom : Contents"))
+    }
+
 
     @OptIn(ExperimentalCompilerApi::class)
     fun getGeneratedFileContent(

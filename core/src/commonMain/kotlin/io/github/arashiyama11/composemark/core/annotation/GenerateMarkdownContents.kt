@@ -6,4 +6,5 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.CLASS)
 public annotation class GenerateMarkdownContents(
     val markdownRenderer: KClass<out MarkdownRenderer>,
+    val implName: String = "",
 )
