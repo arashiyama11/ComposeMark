@@ -1,5 +1,5 @@
 [versions]
-agp = "8.12.0"
+agp = "8.12.1"
 autoServiceAnnotations = "1.1.1"
 autoServiceKsp = "1.2.0"
 kotlin = "2.2.0"
