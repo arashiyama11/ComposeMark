@@ -1,0 +1,49 @@
+name: Unit Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - target: iosSimulatorArm64Test
+            os: macos-latest
+          - target: jvmTest
+            os: ubuntu-latest
+          - target: testDebugUnitTest
+            os: ubuntu-latest
+          - target: testReleaseUnitTest
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-java
+
+      - name: run tests
+        run: |
+          chmod +x gradlew
+          ./gradlew ${{ matrix.target }}
+
+  build-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-java
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Run assembleDebug
+        run: ./gradlew :sample:assembleDebug
+      - name: Verify generated file exists
+        run: ls sample/build/generated/ksp/debug/kotlin/io/github/arashiyama11/composemark/sample/ContentsImpl.kt
+

@@ -46,8 +46,11 @@ class DefaultMarkdownLoader(
 class MarkdownComposeProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
-    private val markdownLoader: MarkdownLoader
+    private val markdownLoader: MarkdownLoader,
+    private val rootPath: String?
 ) : SymbolProcessor {
+
+    private val generatedFqcns = mutableSetOf<String>()
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbols = resolver.getSymbolsWithAnnotation(GenerateMarkdownContents::class.java.name)
@@ -57,7 +60,21 @@ class MarkdownComposeProcessor(
             .filterIsInstance<KSClassDeclaration>()
             .forEach { classDeclaration ->
                 try {
-                    val classIR = classDeclaration.toClassIR(markdownLoader, logger)
+                    val classIR = classDeclaration.toClassIR(markdownLoader, logger, rootPath)
+                    val fqcn = classIR.packageName + "." + classIR.implName
+
+                    // 同一ラウンドでの重複を検出
+                    if (!generatedFqcns.add(fqcn)) {
+                        logger.error("生成クラス名が同一ラウンド内で衝突しています: $fqcn", classDeclaration)
+                        return@forEach
+                    }
+
+                    // 既存ソース/過去生成物との衝突を事前検出
+                    val existing = resolver.getClassDeclarationByName(resolver.getKSNameFromString(fqcn))
+                    if (existing != null) {
+                        logger.error("生成クラス名が既存と衝突しています: $fqcn。別の implName を指定してください", classDeclaration)
+                        return@forEach
+                    }
                     val fileSpec = classIR.toFileSpec()
                     fileSpec.writeTo(
                         codeGenerator = codeGenerator,
@@ -93,7 +110,8 @@ class MarkdownComposeProcessorProvider(
         return MarkdownComposeProcessor(
             codeGenerator = environment.codeGenerator,
             logger = environment.logger,
-            markdownLoader = loader
+            markdownLoader = loader,
+            rootPath = rootPath
         )
     }
 }

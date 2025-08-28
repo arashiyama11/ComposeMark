@@ -1,4 +1,4 @@
-name: Consumer Test Workflow
+name: Consumer Test
 
 on:
   push:
@@ -41,15 +41,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-          cache: gradle
-
-      - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v3
+      - uses: ./.github/actions/setup-java
 
       - name: Grant Gradle wrapper execute permission (root)
         run: chmod +x gradlew
