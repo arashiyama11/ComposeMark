@@ -1,4 +1,4 @@
-name: Consumer Test Workflow
+name: Consumer Test
 
 on:
   push:
