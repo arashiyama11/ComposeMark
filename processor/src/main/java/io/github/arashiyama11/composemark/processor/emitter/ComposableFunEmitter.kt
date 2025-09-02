@@ -75,7 +75,7 @@ private fun emitSectionsRender(
 
             is MarkdownSection.Composable -> {
                 builder.beginControlFlow(
-                    "renderer.InlineComposableWrapper(modifier = %L, source = %S)",
+                    "renderer.RenderComposable(modifier = %L, source = %S)",
                     modifierParamName,
                     section.content.trim()
                 )
@@ -98,7 +98,7 @@ private fun emitSectionsRender(
 
                 is MarkdownSection.Composable -> {
                     builder.beginControlFlow(
-                        "renderer.InlineComposableWrapper(modifier = %T, source = %S)",
+                        "renderer.RenderComposable(modifier = %T, source = %S)",
                         modifierClassName,
                         section.content.trim()
                     )

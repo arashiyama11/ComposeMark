@@ -33,11 +33,11 @@ fun KSClassDeclaration.toClassIR(
         .map { it.toFunctionIR(markdownLoader, logger) }
         .toList()
 
-    val rendererType = annotationGMC.arguments
-        .first { it.name?.asString() == "markdownRenderer" }
+    val composeMarkType = annotationGMC.arguments
+        .first { it.name?.asString() == "composeMark" }
         .value as com.google.devtools.ksp.symbol.KSType
 
-    val rendererFactoryFqcn = rendererType.declaration.qualifiedName!!.asString()
+    val rendererFactoryFqcn = composeMarkType.declaration.qualifiedName!!.asString()
 
     val (contentsPropertyName, dirEntries) = collectContentsMapAndDirEntries(
         classDeclaration = this,

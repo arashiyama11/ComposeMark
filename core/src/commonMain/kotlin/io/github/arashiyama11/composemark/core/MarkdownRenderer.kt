@@ -9,7 +9,7 @@ public interface MarkdownRenderer {
     public fun Render(modifier: Modifier, path: String?, source: String)
 
     @Composable
-    public fun InlineComposableWrapper(
+    public fun RenderComposable(
         modifier: Modifier,
         source: String,
         content: @Composable () -> Unit,

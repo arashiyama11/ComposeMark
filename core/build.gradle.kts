@@ -85,12 +85,14 @@ kotlin {
                 implementation(libs.kotlin.stdlib)
                 implementation(compose.runtime)
                 implementation(compose.ui)
+                implementation(libs.kotlinx.coroutines.core)
             }
         }
 
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
     }
