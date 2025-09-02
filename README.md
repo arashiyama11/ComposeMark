@@ -1,3 +1,8 @@
+theme: androidx.compose.material3.MaterialTheme
+title: Hello ComposeMark
+footer: &copy; 2024 arashiyama11
+---
+
 # ComposeMark
 
 ComposeMark は、Markdown ファイルやインライン Markdown を Jetpack Compose の `@Composable`
@@ -10,7 +15,7 @@ ComposeMark は、Markdown ファイルやインライン Markdown を Jetpack C
 * **processor**: KSP Processor 実装 (`MarkdownComposeProcessor`)
 
 <Composable>
-androidx.compose.material3.Text("Hello ComposeMark!")
+  androidx.compose.material3.Text("Hello ComposeMark!")
 </Composable>
 
 ## アノテーション

@@ -70,15 +70,18 @@ class DirectoryAggregationTest {
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromDirectory
             import io.github.arashiyama11.composemark.core.MarkdownRenderer
+            import io.github.arashiyama11.composemark.core.ComposeMark
             import androidx.compose.runtime.Composable
             import androidx.compose.ui.Modifier
 
             class Renderer: MarkdownRenderer {
                 @Composable override fun Render(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun InlineComposableWrapper(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
+                @Composable override fun RenderComposable(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
             }
 
-            @GenerateMarkdownContents(Renderer::class)
+            class CM: ComposeMark(Renderer()) { override fun setup() {} }
+
+            @GenerateMarkdownContents(CM::class)
             interface DirDoc {
                 @GenerateMarkdownFromDirectory(dir = "docs",includes = ["**/*.md", "**/*.mdcx"], excludes = [])
                 val contents: Map<String, @Composable (Modifier) -> Unit>
@@ -130,15 +133,18 @@ class DirectoryAggregationTest {
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromDirectory
             import io.github.arashiyama11.composemark.core.MarkdownRenderer
+            import io.github.arashiyama11.composemark.core.ComposeMark
             import androidx.compose.runtime.Composable
             import androidx.compose.ui.Modifier
 
             class Renderer: MarkdownRenderer {
                 @Composable override fun Render(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun InlineComposableWrapper(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
+                @Composable override fun RenderComposable(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
             }
 
-            @GenerateMarkdownContents(Renderer::class)
+            class CM: ComposeMark(Renderer()) { override fun setup() {} }
+
+            @GenerateMarkdownContents(CM::class)
             interface DirDoc {
                 @GenerateMarkdownFromDirectory(dir = "empty")
                 val contents: Map<String, @Composable (Modifier) -> Unit>
@@ -177,15 +183,18 @@ class DirectoryAggregationTest {
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromDirectory
             import io.github.arashiyama11.composemark.core.MarkdownRenderer
+            import io.github.arashiyama11.composemark.core.ComposeMark
             import androidx.compose.runtime.Composable
             import androidx.compose.ui.Modifier
 
             class Renderer: MarkdownRenderer {
                 @Composable override fun Render(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun InlineComposableWrapper(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
+                @Composable override fun RenderComposable(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
             }
 
-            @GenerateMarkdownContents(Renderer::class)
+            class CM: ComposeMark(Renderer()) { override fun setup() {} }
+
+            @GenerateMarkdownContents(CM::class)
             interface DirDoc {
                 @GenerateMarkdownFromDirectory(dir = "docs", excludes = ["**/*.md"])
                 val contents: Map<String, @Composable (Modifier) -> Unit>

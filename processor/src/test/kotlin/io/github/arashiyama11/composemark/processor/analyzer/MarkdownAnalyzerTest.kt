@@ -72,12 +72,13 @@ class MarkdownAnalyzerTest {
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromPath
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromSource
             import io.github.arashiyama11.composemark.core.MarkdownRenderer
+            import io.github.arashiyama11.composemark.core.ComposeMark
             import androidx.compose.runtime.Composable
             import androidx.compose.ui.Modifier
             
             class Renderer: MarkdownRenderer {
                 @Composable override fun Render(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun InlineComposableWrapper(
+                @Composable override fun RenderComposable(
                     modifier: Modifier,
                     source: String,
                     content: @Composable () -> Unit
@@ -85,8 +86,9 @@ class MarkdownAnalyzerTest {
                     content()
                 }
             }
+            class CM: ComposeMark(Renderer()) { override fun setup() {} }
             
-            @GenerateMarkdownContents(Renderer::class)
+            @GenerateMarkdownContents(CM::class)
             interface Doc {
                 @Composable @GenerateMarkdownFromPath("doc.md") fun PathCase() 
                 @Composable @GenerateMarkdownFromSource("Hello") fun SourceCase(modifier: Modifier)
@@ -100,7 +102,7 @@ class MarkdownAnalyzerTest {
         assertEquals("test", parts[0])
         assertEquals("Doc", parts[1])
         assertEquals("DocImpl", parts[2])
-        assertTrue(parts[3].endsWith(".Renderer"))
+        assertTrue(parts[3].endsWith(".CM"))
         assertEquals("contents", parts[4])
 
         val functions = parts[5].split(";").filter { it.isNotBlank() }

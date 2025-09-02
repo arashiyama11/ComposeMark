@@ -103,6 +103,7 @@ package io.test
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromPath
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromSource
+import io.github.arashiyama11.composemark.core.ComposeMark
 import io.github.arashiyama11.composemark.core.MarkdownRenderer
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
@@ -116,7 +117,16 @@ class Renderer: MarkdownRenderer {
     override fun Render(modifier: Modifier, path: String?, source: String) {
         Text(source)
     }
+    @Composable
+    override fun RenderComposable(
+        modifier: Modifier,
+        source: String,
+        content: @Composable () -> Unit
+    ) {
+        content()
+    }
 }
+class CM: ComposeMark(Renderer()) { override fun setup() {} }
 """.trimIndent()
     private val mdcxContent = """
         start mdcx content
@@ -134,7 +144,7 @@ class Renderer: MarkdownRenderer {
     fun `processor generates ContentsImpl`() {
 
         val src = contentImports + defaultRenderer + """
-          @GenerateMarkdownContents(Renderer::class)
+          @GenerateMarkdownContents(CM::class)
           interface Contents {
             @Composable
             @GenerateMarkdownFromPath("README.md")
@@ -161,7 +171,7 @@ class Renderer: MarkdownRenderer {
     @Test
     fun `processor respects implName override`() {
         val src = contentImports + defaultRenderer + """
-          @GenerateMarkdownContents(Renderer::class, implName = "ContentsCustom")
+          @GenerateMarkdownContents(CM::class, implName = "ContentsCustom")
           interface Contents {
             @Composable
             @GenerateMarkdownFromSource("Hello")
@@ -263,7 +273,7 @@ class Renderer: MarkdownRenderer {
     @Test
     fun `processor generates contents map when property declared`() {
         val src = contentImports + defaultRenderer + """
-          @GenerateMarkdownContents(Renderer::class)
+          @GenerateMarkdownContents(CM::class)
           interface Ctx {
             @Composable
             @GenerateMarkdownFromSource("Hello")

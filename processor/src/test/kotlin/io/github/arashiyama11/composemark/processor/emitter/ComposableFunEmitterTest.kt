@@ -9,7 +9,7 @@ import kotlin.test.assertContains
 
 class ComposableFunEmitterTest {
 
-    private fun renderFunction(ir: FunctionIR, rendererFactoryFqcn: String = "com.example.Renderer.Factory"): String {
+    private fun renderFunction(ir: FunctionIR, rendererFactoryFqcn: String = "com.example.MyComposeMark"): String {
         val funSpec = ir.toComposableFun(rendererFactoryFqcn)
         // Wrap into a file to render imports consistently
         val file = FileSpec.builder("com.example", "Tmp")
@@ -32,7 +32,7 @@ class ComposableFunEmitterTest {
         // Fallback uses fully-qualified Modifier for single-section path
         assertContains(out, "renderer.Render(androidx.compose.ui.Modifier, null, \"Hello\")")
         // remember block is always emitted
-        assertContains(out, "val renderer = remember { com.example.Renderer.Factory() }")
+        assertContains(out, "val renderer = remember { com.example.MyComposeMark() }")
     }
 
     @Test
@@ -64,6 +64,7 @@ class ComposableFunEmitterTest {
         // Markdown section inside multi-section uses imported Modifier token
         assertContains(out, "renderer.Render(Modifier, null, \"A\")")
         // Composable section output is emitted as-is
+        assertContains(out, "renderer.RenderComposable(")
         assertContains(out, "B")
     }
 }

@@ -15,7 +15,7 @@ class MarkdownEmitterTest {
             packageName = "com.example",
             interfaceName = "MyMarkdown",
             implName = "MyMarkdownImpl",
-            rendererFactoryFqcn = "com.example.MyRenderer.Factory",
+            rendererFactoryFqcn = "com.example.MyComposeMark",
             functions = listOf(
                 FunctionIR(
                     name = "SimpleGreeting",
@@ -57,16 +57,16 @@ class MarkdownEmitterTest {
 
               @Composable
               override fun SimpleGreeting(modifier: Modifier) {
-                val renderer = remember { com.example.MyRenderer.Factory() }
+                val renderer = remember { com.example.MyComposeMark() }
                 renderer.Render(modifier, null, "Hello World!")
               }
 
               @Composable
               override fun GreetingWithName(modifier: Modifier, name: String) {
-                val renderer = remember { com.example.MyRenderer.Factory() }
+                val renderer = remember { com.example.MyComposeMark() }
                 Column(modifier = modifier) {
                   renderer.Render(Modifier, null, "Hello,")
-                  renderer.InlineComposableWrapper(modifier = Modifier, source = "name") {
+                  renderer.RenderComposable(modifier = Modifier, source = "name") {
                     name
                   }
                   renderer.Render(Modifier, null, "!")
