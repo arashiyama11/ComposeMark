@@ -28,7 +28,10 @@ internal fun collectContentsMapAndDirEntries(
     val prop = findContentsMapDeclaration(classDeclaration) ?: return null to emptyList()
     val propName = prop.simpleName.asString()
 
-    val dirAnn = prop.getAnnotationsByType(GenerateMarkdownFromDirectory::class).firstOrNull()
+    val dirAnn = prop.annotations.firstOrNull { ann ->
+        val qn = ann.annotationType.resolve().declaration.qualifiedName?.asString()
+        qn == GenerateMarkdownFromDirectory::class.qualifiedName
+    }
     if (dirAnn == null) return propName to emptyList()
 
     if (rootPath == null) {
@@ -37,14 +40,25 @@ internal fun collectContentsMapAndDirEntries(
     }
 
     val base = Paths.get(rootPath).normalize().toAbsolutePath()
-    val targetDir = base.resolve(dirAnn.dir).normalize()
+    val dirValue = dirAnn.arguments.firstOrNull { it.name?.asString() == "dir" }?.value as? String
+        ?: run {
+            logger.error("dir is missing in @GenerateMarkdownFromDirectory", prop)
+            throw IllegalStateException("dir is required")
+        }
+    val targetDir = base.resolve(dirValue).normalize()
     if (!Files.exists(targetDir) || !Files.isDirectory(targetDir)) {
         logger.error("指定ディレクトリが存在しません: $targetDir", prop)
         throw IllegalArgumentException("dir not found: $targetDir")
     }
 
-    val includeMatchers = dirAnn.includes.flatMap(::expandTopLevel).map(::makeGlobMatcher)
-    val excludeMatchers = dirAnn.excludes.flatMap(::expandTopLevel).map(::makeGlobMatcher)
+    val includes: List<String> =
+        (dirAnn.arguments.firstOrNull { it.name?.asString() == "includes" }?.value as? List<*>)
+            ?.mapNotNull { it as? String } ?: emptyList()
+    val excludes: List<String> =
+        (dirAnn.arguments.firstOrNull { it.name?.asString() == "excludes" }?.value as? List<*>)
+            ?.mapNotNull { it as? String } ?: emptyList()
+    val includeMatchers = includes.flatMap(::expandTopLevel).map(::makeGlobMatcher)
+    val excludeMatchers = excludes.flatMap(::expandTopLevel).map(::makeGlobMatcher)
 
     val paths: List<Path> =
         Files.list(targetDir).filter { Files.isRegularFile(it) }.collect(Collectors.toList())

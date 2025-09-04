@@ -12,6 +12,7 @@ import io.github.arashiyama11.composemark.processor.model.SourceSpec
 fun FunctionIR.toComposableFun(rendererFactoryFqcn: String): FunSpec {
     val composableAnnotation = ClassName("androidx.compose.runtime", "Composable")
     val rememberMember = MemberName("androidx.compose.runtime", "remember")
+    val blockClassName = ClassName("io.github.arashiyama11.composemark.core", "Block")
 
     val funSpec = FunSpec.builder(this.name)
         .apply { if (this@toComposableFun.isOverride) addModifiers(KModifier.OVERRIDE) }
@@ -36,79 +37,61 @@ fun FunctionIR.toComposableFun(rendererFactoryFqcn: String): FunSpec {
         val modifierParamName =
             if (acceptsModifier) parameters.first().name else "androidx.compose.ui.Modifier"
 
-        emitSectionsRender(
+        emitBlocksAndRender(
             this,
             markdownLiteral,
             modifierParamName,
-            pathLiteral
+            pathLiteral,
+            blockClassName,
+            rememberMember
         )
     })
 
     return funSpec.build()
 }
 
-private fun emitSectionsRender(
+private fun emitBlocksAndRender(
     builder: CodeBlock.Builder,
     markdown: String,
     modifierParamName: String,
-    pathLiteral: String
+    pathLiteral: String,
+    blockClassName: ClassName,
+    rememberMember: MemberName,
 ) {
     val sections = markdownToSections(markdown)
-    val modifierClassName = ClassName("androidx.compose.ui", "Modifier")
-    val columnMember = MemberName("androidx.compose.foundation.layout", "Column")
-
     if (sections.isEmpty()) {
         builder.addStatement("// No content to render")
         return
     }
 
-    if (sections.size == 1) {
-        when (val section = sections.first()) {
+    builder.add("val blocks = %M {\n", rememberMember)
+    builder.add("  listOf(\n")
+    sections.forEach { section ->
+        when (section) {
             is MarkdownSection.Markdown -> {
                 builder.addStatement(
-                    "renderer.Render(%L, %L, %S)",
-                    modifierParamName,
+                    "  %T.markdown(%S, %L),",
+                    blockClassName,
+                    section.content.trim(),
                     pathLiteral,
-                    section.content.trim()
                 )
             }
 
             is MarkdownSection.Composable -> {
-                builder.beginControlFlow(
-                    "renderer.RenderComposable(modifier = %L, source = %S)",
-                    modifierParamName,
+                builder.add(
+                    "  %T.composable(source = %S) {\n",
+                    blockClassName,
                     section.content.trim()
                 )
-                builder.addStatement("%L", section.content.trim())
-                builder.endControlFlow()
+                builder.addStatement("  %L", section.content.trim())
+                builder.add("},\n")
             }
         }
-    } else {
-        builder.beginControlFlow("%M(modifier = %L)", columnMember, modifierParamName)
-        sections.forEach { section ->
-            when (section) {
-                is MarkdownSection.Markdown -> {
-                    builder.addStatement(
-                        "renderer.Render(%T, %L, %S)",
-                        modifierClassName,
-                        pathLiteral,
-                        section.content.trim()
-                    )
-                }
-
-                is MarkdownSection.Composable -> {
-                    builder.beginControlFlow(
-                        "renderer.RenderComposable(modifier = %T, source = %S)",
-                        modifierClassName,
-                        section.content.trim()
-                    )
-                    builder.addStatement("%L", section.content.trim())
-                    builder.endControlFlow()
-                }
-            }
-        }
-        builder.endControlFlow()
     }
+    builder.add("  )\n")
+    builder.add("}\n")
+
+    builder.addStatement("renderer.RenderBlocks(blocks, %L, %L)", modifierParamName, pathLiteral)
 }
 
 private sealed interface MarkdownSection {

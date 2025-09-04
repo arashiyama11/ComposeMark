@@ -85,6 +85,7 @@ kotlin {
                 implementation(libs.kotlin.stdlib)
                 implementation(compose.runtime)
                 implementation(compose.ui)
+                implementation(compose.foundation)
                 implementation(libs.kotlinx.coroutines.core)
             }
         }

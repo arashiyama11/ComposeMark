@@ -23,9 +23,11 @@ fun KSClassDeclaration.toClassIR(
     val annotationGMC = annotations.first { it.shortName.asString() == "GenerateMarkdownContents" }
     val packageName = this.packageName.asString()
     val interfaceName = this.simpleName.asString()
-    val rawImplNameArg = annotationGMC.arguments
-        .firstOrNull { it.name?.asString() == "implName" }
-        ?.value as? String ?: ""
+    val args = annotationGMC.arguments
+    val rawImplNameArg =
+        (args.firstOrNull { it.name?.asString() == "implName" }?.value as? String)
+            ?: (args.getOrNull(1)?.value as? String) // positional fallback
+            ?: ""
 
     val implName = resolveImplName(interfaceName, rawImplNameArg, logger, this)
     val baseFunctions = getAllFunctions()
@@ -33,9 +35,10 @@ fun KSClassDeclaration.toClassIR(
         .map { it.toFunctionIR(markdownLoader, logger) }
         .toList()
 
-    val composeMarkType = annotationGMC.arguments
-        .first { it.name?.asString() == "composeMark" }
-        .value as com.google.devtools.ksp.symbol.KSType
+    val composeMarkType = (
+        args.firstOrNull { it.name?.asString() == "composeMark" }?.value
+            ?: args.getOrNull(0)?.value
+        ) as com.google.devtools.ksp.symbol.KSType
 
     val rendererFactoryFqcn = composeMarkType.declaration.qualifiedName!!.asString()
 

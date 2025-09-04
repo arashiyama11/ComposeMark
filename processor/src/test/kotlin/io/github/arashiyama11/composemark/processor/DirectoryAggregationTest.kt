@@ -33,6 +33,8 @@ class DirectoryAggregationTest {
         @Retention(AnnotationRetention.BINARY)
         annotation class Composable
         inline fun <T> remember(calculation: () -> T): T = calculation()
+        interface State<T> { val value: T }
+        fun <T> rememberUpdatedState(newValue: T): State<T> = object: State<T> { override val value: T = newValue }
         """.trimIndent()
     )
 
@@ -75,8 +77,8 @@ class DirectoryAggregationTest {
             import androidx.compose.ui.Modifier
 
             class Renderer: MarkdownRenderer {
-                @Composable override fun Render(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun RenderComposable(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
+                @Composable override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
+                @Composable override fun RenderComposableBlock(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
             }
 
             class CM: ComposeMark(Renderer()) { override fun setup() {} }
@@ -138,8 +140,8 @@ class DirectoryAggregationTest {
             import androidx.compose.ui.Modifier
 
             class Renderer: MarkdownRenderer {
-                @Composable override fun Render(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun RenderComposable(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
+                @Composable override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
+                @Composable override fun RenderComposableBlock(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
             }
 
             class CM: ComposeMark(Renderer()) { override fun setup() {} }
@@ -188,8 +190,8 @@ class DirectoryAggregationTest {
             import androidx.compose.ui.Modifier
 
             class Renderer: MarkdownRenderer {
-                @Composable override fun Render(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun RenderComposable(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
+                @Composable override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
+                @Composable override fun RenderComposableBlock(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
             }
 
             class CM: ComposeMark(Renderer()) { override fun setup() {} }

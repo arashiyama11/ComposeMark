@@ -19,7 +19,7 @@ public class Pipeline<T>() {
 
 
 public abstract class PipelineContext<TSubject>() {
-    public abstract var subject: TSubject
+    internal abstract var subject: TSubject
     public abstract fun finish()
     public abstract fun proceedWith(subject: TSubject): TSubject
     public abstract fun proceed(): TSubject

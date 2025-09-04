@@ -29,8 +29,11 @@ class ComposableFunEmitterTest {
 
         val out = renderFunction(ir)
         assertContains(out, "override fun About()")
-        // Fallback uses fully-qualified Modifier for single-section path
-        assertContains(out, "renderer.Render(androidx.compose.ui.Modifier, null, \"Hello\")")
+        // Emits RenderBlocks with default Modifier and a remembered blocks list
+        assertContains(out, "val blocks = remember {")
+        assertContains(out, "listOf(")
+        assertContains(out, "Block.markdown(\"Hello\", null)")
+        assertContains(out, "renderer.RenderBlocks(blocks, androidx.compose.ui.Modifier, null)")
         // remember block is always emitted
         assertContains(out, "val renderer = remember { com.example.MyComposeMark() }")
     }
@@ -50,7 +53,7 @@ class ComposableFunEmitterTest {
     }
 
     @Test
-    fun `mixed sections with unmatched end tag renders Column and sections`() {
+    fun `mixed sections with unmatched end tag renders blocks sequence`() {
         val ir = FunctionIR(
             name = "Mixed",
             parameters = emptyList(),
@@ -59,12 +62,13 @@ class ComposableFunEmitterTest {
         )
 
         val out = renderFunction(ir)
-        // Column uses provided modifier param name or default fully-qualified one
-        assertContains(out, "Column(modifier = androidx.compose.ui.Modifier)")
-        // Markdown section inside multi-section uses imported Modifier token
-        assertContains(out, "renderer.Render(Modifier, null, \"A\")")
-        // Composable section output is emitted as-is
-        assertContains(out, "renderer.RenderComposable(")
+        // Uses remembered blocks list and RenderBlocks
+        assertContains(out, "val blocks = remember {")
+        assertContains(out, "listOf(")
+        assertContains(out, "Block.markdown(\"A\", null)")
+        assertContains(out, "Block.composable(source = \"B\")")
+        assertContains(out, "renderer.RenderBlocks(blocks, androidx.compose.ui.Modifier, null)")
+        // Composable section body is emitted as-is
         assertContains(out, "B")
     }
 }

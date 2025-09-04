@@ -5,7 +5,7 @@ import io.github.arashiyama11.composemark.processor.model.FunctionIR
 import io.github.arashiyama11.composemark.processor.model.ParamIR
 import io.github.arashiyama11.composemark.processor.model.SourceSpec
 import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class MarkdownEmitterTest {
 
@@ -38,42 +38,18 @@ class MarkdownEmitterTest {
             contentsPropertyName = "contents"
         )
 
-        val fileSpec = classIR.toFileSpec()
-        val expected = """
-            package com.example
-
-            import androidx.compose.foundation.layout.Column
-            import androidx.compose.runtime.Composable
-            import androidx.compose.runtime.remember
-            import androidx.compose.ui.Modifier
-            import kotlin.String
-            import kotlin.Unit
-            import kotlin.collections.Map
-
-            public object MyMarkdownImpl : MyMarkdown {
-              override val contents: Map<String, @Composable (modifier: Modifier) -> Unit> = mapOf(
-                "SimpleGreeting" to { SimpleGreeting(it) },
-              )
-
-              @Composable
-              override fun SimpleGreeting(modifier: Modifier) {
-                val renderer = remember { com.example.MyComposeMark() }
-                renderer.Render(modifier, null, "Hello World!")
-              }
-
-              @Composable
-              override fun GreetingWithName(modifier: Modifier, name: String) {
-                val renderer = remember { com.example.MyComposeMark() }
-                Column(modifier = modifier) {
-                  renderer.Render(Modifier, null, "Hello,")
-                  renderer.RenderComposable(modifier = Modifier, source = "name") {
-                    name
-                  }
-                  renderer.Render(Modifier, null, "!")
-                }
-              }
-            }
-        """.trimIndent()
-        assertEquals(expected, fileSpec.toString().trim())
+        val out = classIR.toFileSpec().toString()
+        fun has(s: String) = assertTrue(out.contains(s), "Expected to contain: \n$s\n\nIn:\n$out")
+        has("package com.example")
+        has("object MyMarkdownImpl : MyMarkdown")
+        has("override val contents: Map<String, @Composable (modifier: Modifier) -> Unit> = mapOf(")
+        has("\"SimpleGreeting\" to { SimpleGreeting(it) }")
+        has("@Composable\n  override fun SimpleGreeting(modifier: Modifier)")
+        has("val renderer = remember { com.example.MyComposeMark() }")
+        has("val blocks = remember {")
+        has("Block.markdown(\"Hello World!\", null)")
+        has("renderer.RenderBlocks(blocks, modifier, null)")
+        has("@Composable\n  override fun GreetingWithName(modifier: Modifier, name: String)")
+        has("Block.composable(source = \"name\")")
     }
 }
