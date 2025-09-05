@@ -82,6 +82,7 @@ class MarkdownAnalyzerTest {
                 @Composable override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
                 @Composable override fun RenderComposableBlock(
                     modifier: Modifier,
+                    path: String?,
                     source: String,
                     content: @Composable () -> Unit
                 ) {

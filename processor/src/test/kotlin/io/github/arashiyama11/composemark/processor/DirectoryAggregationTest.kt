@@ -78,7 +78,7 @@ class DirectoryAggregationTest {
 
             class Renderer: MarkdownRenderer {
                 @Composable override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun RenderComposableBlock(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
+                @Composable override fun RenderComposableBlock(modifier: Modifier, path: String?, source: String, content: @Composable () -> Unit) { content() }
             }
 
             class CM: ComposeMark(Renderer()) { override fun setup() {} }
@@ -141,7 +141,7 @@ class DirectoryAggregationTest {
 
             class Renderer: MarkdownRenderer {
                 @Composable override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun RenderComposableBlock(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
+                @Composable override fun RenderComposableBlock(modifier: Modifier, path: String?, source: String, content: @Composable () -> Unit) { content() }
             }
 
             class CM: ComposeMark(Renderer()) { override fun setup() {} }
@@ -191,7 +191,7 @@ class DirectoryAggregationTest {
 
             class Renderer: MarkdownRenderer {
                 @Composable override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun RenderComposableBlock(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
+                @Composable override fun RenderComposableBlock(modifier: Modifier, path: String?, source: String, content: @Composable () -> Unit) { content() }
             }
 
             class CM: ComposeMark(Renderer()) { override fun setup() {} }

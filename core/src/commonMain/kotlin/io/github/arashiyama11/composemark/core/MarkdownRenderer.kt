@@ -12,6 +12,7 @@ public interface MarkdownRenderer {
     @Composable
     public fun RenderComposableBlock(
         modifier: Modifier,
+        path: String?,
         source: String,
         content: @Composable () -> Unit,
     )

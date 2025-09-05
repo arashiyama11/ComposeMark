@@ -123,6 +123,7 @@ class Renderer: MarkdownRenderer {
     @Composable
     override fun RenderComposableBlock(
         modifier: Modifier,
+        path: String?,
         source: String,
         content: @Composable () -> Unit
     ) {

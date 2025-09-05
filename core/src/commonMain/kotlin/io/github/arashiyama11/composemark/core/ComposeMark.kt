@@ -91,16 +91,16 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
     ) {
         val currentContent = rememberUpdatedState(content)
 
-        val result = remember(source) {
+        val result = remember(path, source) {
             val subject = PreProcessorPipelineContent(
                 content = source,
                 metadata = PreProcessorMetadata(),
-                path = null // TODO
+                path = path
             )
             val processed = composableBlockPreProcessorPipeline.execute(subject)
 
             val renderSubject = ComposablePipelineContent(processed.metadata) { mod ->
-                renderer.RenderComposableBlock(mod, processed.content) { currentContent.value() }
+                renderer.RenderComposableBlock(mod, processed.path, processed.content) { currentContent.value() }
             }
             renderComposableBlockPipeline.execute(renderSubject)
         }
@@ -145,13 +145,16 @@ public fun interface BlockItem {
 public object Block {
     public fun markdown(source: String, path: String? = null): BlockItem =
         BlockItem { scope, p, modifier ->
-            scope.RenderMarkDownBlock(source, modifier, path ?: p)
+            scope.RenderMarkDownBlock(source, modifier, resolvePath(path, p))
         }
 
     public fun composable(
         source: String,
+        path: String? = null,
         content: @Composable () -> Unit,
     ): BlockItem = BlockItem { scope, p, modifier ->
-        scope.RenderComposableBlock(source, modifier) { content() }
+        scope.RenderComposableBlock(source, modifier, resolvePath(path, p)) { content() }
     }
 }
+
+internal fun resolvePath(explicit: String?, inherited: String?): String? = explicit ?: inherited

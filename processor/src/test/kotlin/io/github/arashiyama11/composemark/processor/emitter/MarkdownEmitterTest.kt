@@ -52,4 +52,36 @@ class MarkdownEmitterTest {
         has("@Composable\n  override fun GreetingWithName(modifier: Modifier, name: String)")
         has("Block.composable(source = \"name\")")
     }
+
+    @Test
+    fun `generates path literal for FromPath in blocks and RenderBlocks`() {
+        val classIR = ClassIR(
+            packageName = "com.example",
+            interfaceName = "Docs",
+            implName = "DocsImpl",
+            rendererFactoryFqcn = "com.example.MyComposeMark",
+            functions = listOf(
+                FunctionIR(
+                    name = "Readme",
+                    parameters = listOf(
+                        ParamIR("modifier", "androidx.compose.ui.Modifier")
+                    ),
+                    source = SourceSpec.FromPath(
+                        path = "docs/x.md",
+                        markdownLiteral = "Hello World!"
+                    ),
+                    acceptsModifier = true
+                ),
+            ),
+            contentsPropertyName = "contents"
+        )
+
+        val out = classIR.toFileSpec().toString()
+        fun has(s: String) = assertTrue(out.contains(s), "Expected to contain: \n$s\n\nIn:\n$out")
+        has("object DocsImpl : Docs")
+        has("@Composable\n  override fun Readme(modifier: Modifier)")
+        // Path literal appears in markdown and RenderBlocks
+        has("Block.markdown(\"Hello World!\", \"docs/x.md\")")
+        has("renderer.RenderBlocks(blocks, modifier, \"docs/x.md\")")
+    }
 }

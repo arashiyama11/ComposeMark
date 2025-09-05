@@ -71,4 +71,25 @@ class ComposableFunEmitterTest {
         // Composable section body is emitted as-is
         assertContains(out, "B")
     }
+
+    @Test
+    fun `fromPath propagates path to Block and RenderBlocks`() {
+        val ir = FunctionIR(
+            name = "Doc",
+            parameters = listOf(ParamIR("modifier", "androidx.compose.ui.Modifier")),
+            source = SourceSpec.FromPath(
+                path = "docs/readme.md",
+                markdownLiteral = "Hello <Composable>name</Composable>"
+            ),
+            acceptsModifier = true
+        )
+
+        val out = renderFunction(ir)
+        // markdown section carries path literal
+        assertContains(out, "Block.markdown(\"Hello\", \"docs/readme.md\")")
+        // composable section stays path-less (inherits via RenderBlocks)
+        assertContains(out, "Block.composable(source = \"name\")")
+        // RenderBlocks receives the path literal for inheritance
+        assertContains(out, "renderer.RenderBlocks(blocks, modifier, \"docs/readme.md\")")
+    }
 }
