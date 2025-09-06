@@ -76,10 +76,6 @@ interface Contents {
     @GenerateMarkdownFromPath("README.md")
     fun README(modifier: Modifier = Modifier)
 
-    @Composable
-    @GenerateMarkdownFromPath("AGENTS.md")
-    fun Agents()
-
     companion object : Contents by ContentsImpl
 }
 
