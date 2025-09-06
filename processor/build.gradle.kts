@@ -53,12 +53,12 @@ dependencies {
 
 publishing {
     publications {
-        // 通常のライブラリ jar
+        // Standard library JAR
         create<MavenPublication>("processor") {
             from(components["java"])
             artifactId = "composemark-processor"
         }
-        // プラグイン・マーカー jar は java-gradle-plugin が自動で MarkersPublication を用意します
+        // Plugin marker JAR is provided automatically by java-gradle-plugin (MarkersPublication)
     }
     repositories {
         mavenLocal()

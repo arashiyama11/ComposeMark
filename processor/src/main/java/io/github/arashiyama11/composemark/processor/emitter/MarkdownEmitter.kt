@@ -10,7 +10,7 @@ fun ClassIR.toFileSpec(): FileSpec {
     val interfaceClassName = ClassName(this.packageName, this.interfaceName)
     val implClassName = ClassName(this.packageName, this.implName)
 
-    // 1) 各関数の <Composable> セクションから import を抽出し、本文からは削除
+    // 1) Extract imports from each function's <Composable> sections and remove them from the body
     val collectedImports = LinkedHashSet<ImportDecl>()
     val updatedFunctions = this.functions.map { fn ->
         val (cleaned, imports) = when (val src = fn.source) {
@@ -38,16 +38,16 @@ fun ClassIR.toFileSpec(): FileSpec {
     val fileBuilder = FileSpec.builder(this.packageName, this.implName)
         .addType(typeSpec.build())	
 
-    // 2) 収集した import をファイル先頭に追加（重複は LinkedHashSet で排除）
+    // 2) Add collected imports at the top of the file (LinkedHashSet removes duplicates)
     collectedImports.forEach { imp ->
         if (imp.alias != null) {
-            // alias 付き import
+            // import with alias
             fileBuilder.addAliasedImport(
                 ClassName(imp.packageName, imp.name),
                 imp.alias
             )
         } else {
-            // 通常の import（トップレベル関数/型どちらでもそのまま出力される）
+            // normal import (top-level functions/types)
             fileBuilder.addImport(imp.packageName, imp.name)
         }
     }
@@ -55,14 +55,14 @@ fun ClassIR.toFileSpec(): FileSpec {
     return fileBuilder.build()
 }
 
-// import 宣言の表現
+// Import declaration model
 private data class ImportDecl(
     val packageName: String,
     val name: String,
     val alias: String? = null,
 )
 
-// <Composable> セクション内の import 行を収集し、本文からは削除して返す
+// Collect import lines from <Composable> sections and return the body without them
 private fun extractImportsFromComposableSections(markdown: String): Pair<String, List<ImportDecl>> {
     val startTag = "<Composable>"
     val endTag = "</Composable>"
@@ -73,18 +73,18 @@ private fun extractImportsFromComposableSections(markdown: String): Pair<String,
     while (cursor < markdown.length) {
         val startIndex = markdown.indexOf(startTag, cursor)
         if (startIndex == -1) {
-            // 残りはそのまま
+            // append the rest as-is
             sb.append(markdown.substring(cursor))
             break
         }
-        // 直前の Markdown セクションを出力
+        // write preceding Markdown section
         if (startIndex > cursor) sb.append(markdown.substring(cursor, startIndex))
 
         val contentStart = startIndex + startTag.length
         val endIndex = markdown.indexOf(endTag, contentStart)
         val compBody = if (endIndex == -1) markdown.substring(contentStart) else markdown.substring(contentStart, endIndex)
 
-        // Composable 本文から import 行を抽出し、非 import 行のみを残す
+        // Extract import lines from the Composable body and keep only non-import lines
         val cleanedComposable = buildString {
             compBody.lineSequence().forEach { rawLine ->
                 val line = rawLine.trim()
@@ -92,7 +92,7 @@ private fun extractImportsFromComposableSections(markdown: String): Pair<String,
                 if (m != null) {
                     val fqcn = m.groupValues[1].trim()
                     val alias = m.groupValues.getOrNull(2)?.takeIf { it.isNotBlank() }
-                    // ワイルドカードはスキップ（必要になれば対応）
+                    // Skip wildcard imports for now (can be added later if needed)
                     if (!fqcn.endsWith(".*")) {
                         val lastDot = fqcn.lastIndexOf('.')
                         if (lastDot > 0 && lastDot < fqcn.length - 1) {

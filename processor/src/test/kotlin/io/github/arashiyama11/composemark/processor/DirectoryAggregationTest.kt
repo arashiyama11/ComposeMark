@@ -33,6 +33,8 @@ class DirectoryAggregationTest {
         @Retention(AnnotationRetention.BINARY)
         annotation class Composable
         inline fun <T> remember(calculation: () -> T): T = calculation()
+        interface State<T> { val value: T }
+        fun <T> rememberUpdatedState(newValue: T): State<T> = object: State<T> { override val value: T = newValue }
         """.trimIndent()
     )
 
@@ -70,15 +72,18 @@ class DirectoryAggregationTest {
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromDirectory
             import io.github.arashiyama11.composemark.core.MarkdownRenderer
+            import io.github.arashiyama11.composemark.core.ComposeMark
             import androidx.compose.runtime.Composable
             import androidx.compose.ui.Modifier
 
             class Renderer: MarkdownRenderer {
-                @Composable override fun Render(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun InlineComposableWrapper(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
+                @Composable override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
+                @Composable override fun RenderComposableBlock(modifier: Modifier, path: String?, source: String, content: @Composable () -> Unit) { content() }
             }
 
-            @GenerateMarkdownContents(Renderer::class)
+            class CM: ComposeMark(Renderer()) { override fun setup() {} }
+
+            @GenerateMarkdownContents(CM::class)
             interface DirDoc {
                 @GenerateMarkdownFromDirectory(dir = "docs",includes = ["**/*.md", "**/*.mdcx"], excludes = [])
                 val contents: Map<String, @Composable (Modifier) -> Unit>
@@ -130,15 +135,18 @@ class DirectoryAggregationTest {
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromDirectory
             import io.github.arashiyama11.composemark.core.MarkdownRenderer
+            import io.github.arashiyama11.composemark.core.ComposeMark
             import androidx.compose.runtime.Composable
             import androidx.compose.ui.Modifier
 
             class Renderer: MarkdownRenderer {
-                @Composable override fun Render(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun InlineComposableWrapper(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
+                @Composable override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
+                @Composable override fun RenderComposableBlock(modifier: Modifier, path: String?, source: String, content: @Composable () -> Unit) { content() }
             }
 
-            @GenerateMarkdownContents(Renderer::class)
+            class CM: ComposeMark(Renderer()) { override fun setup() {} }
+
+            @GenerateMarkdownContents(CM::class)
             interface DirDoc {
                 @GenerateMarkdownFromDirectory(dir = "empty")
                 val contents: Map<String, @Composable (Modifier) -> Unit>
@@ -177,15 +185,18 @@ class DirectoryAggregationTest {
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromDirectory
             import io.github.arashiyama11.composemark.core.MarkdownRenderer
+            import io.github.arashiyama11.composemark.core.ComposeMark
             import androidx.compose.runtime.Composable
             import androidx.compose.ui.Modifier
 
             class Renderer: MarkdownRenderer {
-                @Composable override fun Render(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun InlineComposableWrapper(modifier: Modifier, source: String, content: @Composable () -> Unit) { content() }
+                @Composable override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
+                @Composable override fun RenderComposableBlock(modifier: Modifier, path: String?, source: String, content: @Composable () -> Unit) { content() }
             }
 
-            @GenerateMarkdownContents(Renderer::class)
+            class CM: ComposeMark(Renderer()) { override fun setup() {} }
+
+            @GenerateMarkdownContents(CM::class)
             interface DirDoc {
                 @GenerateMarkdownFromDirectory(dir = "docs", excludes = ["**/*.md"])
                 val contents: Map<String, @Composable (Modifier) -> Unit>

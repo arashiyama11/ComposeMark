@@ -16,7 +16,7 @@ class MarkdownEmitterImportLiftTest {
             packageName = "com.example",
             interfaceName = "Foo",
             implName = "FooImpl",
-            rendererFactoryFqcn = "com.example.Renderer.Factory",
+            rendererFactoryFqcn = "com.example.MyComposeMark",
             functions = listOf(
                 FunctionIR(
                     name = "Screen",
@@ -53,4 +53,3 @@ class MarkdownEmitterImportLiftTest {
         assertContains(out, "Row { T(\"hi\") }")
     }
 }
-

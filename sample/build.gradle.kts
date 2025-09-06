@@ -53,7 +53,7 @@ android {
 }
 
 configurations.matching { it.name.endsWith("ProcessorClasspath") }.configureEach {
-    // Skiko の variant 属性 ui に "awt" をセット
+    // Set Skiko variant attribute 'ui' to "awt"
     attributes.attribute(Attribute.of("ui", String::class.java), "awt")
 }
 
@@ -72,6 +72,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("org.jetbrains.skiko:skiko-awt:0.9.22")
+    implementation("com.mikepenz:multiplatform-markdown-renderer:0.35.0")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-android:0.35.0")
 
     //implementation(project(":core"))
     implementation(project(":core"))
@@ -84,16 +86,12 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
-
-//    constraints {
-//        implementation("org.jetbrains.skiko:skiko:0.9.17")   // 強制上書き
-//    }
 }
 
 allprojects {
     afterEvaluate {
         configurations.configureEach {
-            // ui 属性が未設定なら awt を指定
+            // If 'ui' attribute is missing, set it to 'awt'
             if (attributes.getAttribute(Attribute.of("ui", String::class.java)) == null) {
                 attributes.attribute(Attribute.of("ui", String::class.java), "awt")
             }

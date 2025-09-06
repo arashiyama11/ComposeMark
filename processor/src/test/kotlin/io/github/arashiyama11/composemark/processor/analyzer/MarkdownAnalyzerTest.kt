@@ -40,6 +40,8 @@ class MarkdownAnalyzerTest {
         @Retention(AnnotationRetention.BINARY)
         annotation class Composable
         inline fun <T> remember(calculation: () -> T): T = calculation()
+        interface State<T> { val value: T }
+        fun <T> rememberUpdatedState(newValue: T): State<T> = object: State<T> { override val value: T = newValue }
         """.trimIndent()
     )
 
@@ -72,21 +74,24 @@ class MarkdownAnalyzerTest {
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromPath
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromSource
             import io.github.arashiyama11.composemark.core.MarkdownRenderer
+            import io.github.arashiyama11.composemark.core.ComposeMark
             import androidx.compose.runtime.Composable
             import androidx.compose.ui.Modifier
             
             class Renderer: MarkdownRenderer {
-                @Composable override fun Render(modifier: Modifier, path: String?, source: String) {}
-                @Composable override fun InlineComposableWrapper(
+                @Composable override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
+                @Composable override fun RenderComposableBlock(
                     modifier: Modifier,
+                    path: String?,
                     source: String,
                     content: @Composable () -> Unit
                 ) {
                     content()
                 }
             }
+            class CM: ComposeMark(Renderer()) { override fun setup() {} }
             
-            @GenerateMarkdownContents(Renderer::class)
+            @GenerateMarkdownContents(CM::class)
             interface Doc {
                 @Composable @GenerateMarkdownFromPath("doc.md") fun PathCase() 
                 @Composable @GenerateMarkdownFromSource("Hello") fun SourceCase(modifier: Modifier)
@@ -95,12 +100,12 @@ class MarkdownAnalyzerTest {
         """.trimIndent()
 
         val probeData = runProbe(source)
-        // 形式: package|interface|impl|rendererFqcn|contentsProp|fn:name:type:accepts;
+        // Format: package|interface|impl|rendererFqcn|contentsProp|fn:name:type:accepts;
         val parts = probeData.split("|")
         assertEquals("test", parts[0])
         assertEquals("Doc", parts[1])
         assertEquals("DocImpl", parts[2])
-        assertTrue(parts[3].endsWith(".Renderer"))
+        assertTrue(parts[3].endsWith(".CM"))
         assertEquals("contents", parts[4])
 
         val functions = parts[5].split(";").filter { it.isNotBlank() }
@@ -131,7 +136,7 @@ class MarkdownAnalyzerTest {
                 SourceFile.kotlin("User.kt", userSource)
             )
             inheritClassPath = true
-            symbolProcessorProviders += AnalyzerProbeProcessorProvider(MarkdownLoader { "[loaded]" }) as SymbolProcessorProvider
+            symbolProcessorProviders += AnalyzerProbeProcessorProvider { "[loaded]" } as SymbolProcessorProvider
             messageOutputStream = System.out
         }
         val result = compilation.compile()

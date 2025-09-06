@@ -1,5 +1,6 @@
 package org.example.consumer.test
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +39,7 @@ import com.mikepenz.markdown.compose.elements.highlightedCodeFence
 import com.mikepenz.markdown.model.ImageTransformer
 import com.mikepenz.markdown.model.MarkdownColors
 import com.mikepenz.markdown.model.MarkdownTypography
+import io.github.arashiyama11.composemark.core.ComposeMark
 import io.github.arashiyama11.composemark.core.MarkdownRenderer
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
@@ -55,15 +57,12 @@ fun App() {
         MaterialTheme {
             SelectionContainer {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize().padding(horizontal = 48.dp)
+                    modifier = Modifier.padding(horizontal = 48.dp)
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Contents.contentsMap.forEach { (name, content) ->
-                        content(Modifier)
-                    }
+                    ContentsImpl.Compose(Modifier)
                 }
             }
         }
@@ -71,159 +70,29 @@ fun App() {
 }
 
 
-class MyMarkdownRenderer : MarkdownRenderer {
-
-    @Composable
-    fun SampleCode(
-        modifier: Modifier,
-        source: String,
-        content: @Composable (() -> Unit)
-    ) {
-        Row(
-            modifier = modifier.height(IntrinsicSize.Min)
-                .border(1.dp, Color.Black, RoundedCornerShape(8.dp)),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier.weight(1f).padding(8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                content()
-            }
-            Spacer(modifier = Modifier.width(4.dp))
-
-            VerticalDivider(
-                modifier = Modifier.fillMaxHeight(0.8f),
-                color = Color.Gray,
-                thickness = 1.dp,
-            )
-
-            Spacer(modifier = Modifier.width(4.dp))
-            Box(
-                modifier = Modifier.weight(1f)
-                    .padding(8.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Text(
-                    text = source,
-                    style = LocalMarkdownTypography.current.inlineCode,
-                )
-            }
+class MyComposeMark() : ComposeMark(MarkdownRendererImpl()) {
+    override fun setup() {
+        install(SampleCodePlugin) {
+            orientation = SampleCodeConfig.Orientation.HORIZONTAL
         }
-    }
-
-    @Composable
-    override fun InlineComposableWrapper(
-        modifier: Modifier,
-        source: String,
-        content: @Composable (() -> Unit)
-    ) {
-        when (source.lineSequence().first()) {
-            "//!SampleCode" -> {
-                SampleCode(
-                    modifier = modifier.padding(8.dp),
-                    source = source.lineSequence().drop(1).joinToString("\n"),
-                    content = content
-                )
-            }
-
-            else -> {
-                content()
-            }
-        }
-    }
-
-
-    @Composable
-    override fun Render(modifier: Modifier, path: String?, source: String) {
-
-        Markdown(
-            content = source,
-            colors = LocalMarkdownColors.current,
-            typography = LocalMarkdownTypography.current,
-            modifier = Modifier,
-            imageTransformer = Coil3ImageTransformerImpl,
-            components = markdownComponents(
-                codeBlock = highlightedCodeBlock,
-                codeFence = highlightedCodeFence
-            )
-        )
     }
 }
 
-
-@GenerateMarkdownContents(MyMarkdownRenderer::class)
+@GenerateMarkdownContents(MyComposeMark::class)
 
 interface Contents {
 
-    @GenerateMarkdownFromDirectory(".", includes = [], excludes = [])
+    //@GenerateMarkdownFromDirectory(".", includes = [], excludes = [])
     val contentsMap: Map<String, @Composable (Modifier) -> Unit>
 
-    /*@Composable
+    @Composable
     @GenerateMarkdownFromPath("PLAIN.md")
-    fun PlainMarkdown()
+    fun PlainMarkdown(modifier: Modifier)
 
     @Composable
     @GenerateMarkdownFromPath("Compose.mdcx")
-    fun Compose()
-
-
-    val contentsMap: Map<String, @Composable (Modifier) -> Unit>*/
+    fun Compose(modifier: Modifier)
 
     companion object : Contents by ContentsImpl
 }
 
-
-@Composable
-fun rememberMarkdownColors(): MarkdownColors {
-    val colorScheme = MaterialTheme.colorScheme
-
-    val colors = remember {
-        object : MarkdownColors {
-            override val text: Color = colorScheme.onBackground
-            override val codeText: Color = colorScheme.onSurface
-            override val inlineCodeText: Color = colorScheme.onSurfaceVariant
-            override val linkText: Color = colorScheme.primary
-            override val codeBackground: Color = colorScheme.surfaceVariant
-            override val inlineCodeBackground: Color = colorScheme.surfaceVariant
-            override val dividerColor: Color = colorScheme.outline
-            override val tableText: Color = colorScheme.onSurface
-            override val tableBackground: Color = colorScheme.surface
-        }
-    }
-
-    return colors
-}
-
-@Composable
-fun rememberMarkdownTypography(): MarkdownTypography {
-    val colorScheme = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val markdownTypography = remember {
-        object : MarkdownTypography {
-            override val text: TextStyle = typography.bodyLarge
-            override val code: TextStyle =
-                typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
-            override val inlineCode: TextStyle =
-                typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
-            override val h1: TextStyle = typography.headlineLarge
-            override val h2: TextStyle = typography.headlineMedium
-            override val h3: TextStyle = typography.headlineSmall
-            override val h4: TextStyle = typography.titleLarge
-            override val h5: TextStyle = typography.titleMedium
-            override val h6: TextStyle = typography.titleSmall
-            override val quote: TextStyle =
-                typography.bodyLarge.copy(color = colorScheme.secondary)
-            override val paragraph: TextStyle = typography.bodyLarge
-            override val ordered: TextStyle = typography.bodyLarge
-            override val bullet: TextStyle = typography.bodyLarge
-            override val list: TextStyle = typography.bodyLarge
-            override val link: TextStyle =
-                typography.bodyLarge.copy(color = colorScheme.primary)
-            override val textLink: TextLinkStyles = TextLinkStyles()
-            override val table: TextStyle = typography.bodyMedium
-        }
-    }
-
-    return markdownTypography
-}

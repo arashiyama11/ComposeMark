@@ -1,7 +1,6 @@
 package io.github.arashiyama11.composemark.processor.analyzer
 
 import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
@@ -28,23 +27,37 @@ internal fun collectContentsMapAndDirEntries(
     val prop = findContentsMapDeclaration(classDeclaration) ?: return null to emptyList()
     val propName = prop.simpleName.asString()
 
-    val dirAnn = prop.getAnnotationsByType(GenerateMarkdownFromDirectory::class).firstOrNull()
+    val dirAnn = prop.annotations.firstOrNull { ann ->
+        val qn = ann.annotationType.resolve().declaration.qualifiedName?.asString()
+        qn == GenerateMarkdownFromDirectory::class.qualifiedName
+    }
     if (dirAnn == null) return propName to emptyList()
 
     if (rootPath == null) {
-        logger.error("composemark.root.path が未指定のため、ディレクトリ走査ができません", prop)
+        logger.error("composemark.root.path is not specified; directory scanning is unavailable", prop)
         throw IllegalStateException("composemark.root.path is required")
     }
 
     val base = Paths.get(rootPath).normalize().toAbsolutePath()
-    val targetDir = base.resolve(dirAnn.dir).normalize()
+    val dirValue = dirAnn.arguments.firstOrNull { it.name?.asString() == "dir" }?.value as? String
+        ?: run {
+            logger.error("dir is missing in @GenerateMarkdownFromDirectory", prop)
+            throw IllegalStateException("dir is required")
+        }
+    val targetDir = base.resolve(dirValue).normalize()
     if (!Files.exists(targetDir) || !Files.isDirectory(targetDir)) {
-        logger.error("指定ディレクトリが存在しません: $targetDir", prop)
+        logger.error("Specified directory does not exist: $targetDir", prop)
         throw IllegalArgumentException("dir not found: $targetDir")
     }
 
-    val includeMatchers = dirAnn.includes.flatMap(::expandTopLevel).map(::makeGlobMatcher)
-    val excludeMatchers = dirAnn.excludes.flatMap(::expandTopLevel).map(::makeGlobMatcher)
+    val includes: List<String> =
+        (dirAnn.arguments.firstOrNull { it.name?.asString() == "includes" }?.value as? List<*>)
+            ?.mapNotNull { it as? String } ?: emptyList()
+    val excludes: List<String> =
+        (dirAnn.arguments.firstOrNull { it.name?.asString() == "excludes" }?.value as? List<*>)
+            ?.mapNotNull { it as? String } ?: emptyList()
+    val includeMatchers = includes.flatMap(::expandTopLevel).map(::makeGlobMatcher)
+    val excludeMatchers = excludes.flatMap(::expandTopLevel).map(::makeGlobMatcher)
 
     val paths: List<Path> =
         Files.list(targetDir).filter { Files.isRegularFile(it) }.collect(Collectors.toList())
@@ -55,7 +68,7 @@ internal fun collectContentsMapAndDirEntries(
     }
 
     if (selected.isEmpty()) {
-        logger.error("対象ディレクトリにマッチするファイルがありません: $targetDir", prop)
+        logger.error("No files matched in directory: $targetDir", prop)
         throw IllegalStateException("no files matched in $targetDir")
     }
 
@@ -67,7 +80,7 @@ internal fun collectContentsMapAndDirEntries(
         val stem = path.fileName.toString().substringBeforeLast('.')
         val key = stem.replace(Regex("[^A-Za-z0-9]"), "_")
         if (!seenKeys.add(key)) {
-            logger.error("ディレクトリエントリのキーが衝突しました: ${key}", prop)
+            logger.error("Duplicate directory entry key: ${key}", prop)
             throw IllegalStateException("duplicate key: ${key}")
         }
         val markdown = with(logger) { markdownLoader.load(relFromBase) }
@@ -111,7 +124,7 @@ private fun findContentsMapDeclaration(classDeclaration: KSClassDeclaration): KS
 
 
 private fun expandTopLevel(glob: String): List<String> {
-    // **/*.ext → {*.ext,**/*.ext} に拡張
+    // Expand **/*.ext to {*.ext,**/*.ext}
     val m = Regex("""^\*\*/\*\.(\w+)$""").matchEntire(glob)
     return if (m != null) {
         val ext = m.groupValues[1]
