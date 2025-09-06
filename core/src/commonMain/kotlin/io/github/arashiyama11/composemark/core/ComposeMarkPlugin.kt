@@ -46,9 +46,9 @@ public fun <T> createComposeMarkPlugin(
 
 
 public fun <T> composeMarkPlugin(
-    factory: () -> T,
+    initialConfigFactory: () -> T,
     install: ComposeMarkPluginScope.(T) -> Unit
 ): ComposeMarkPlugin<T> = createComposeMarkPlugin { buildConfig ->
-    val config = factory().apply(buildConfig)
+    val config = initialConfigFactory().apply(buildConfig)
     this.install(config)
 }

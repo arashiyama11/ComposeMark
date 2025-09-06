@@ -13,28 +13,27 @@ public class Pipeline<T>() {
     public fun execute(
         subject: T,
     ): T {
-        return DebugPipelineContext(interceptors, subject).execute(subject)
+        return SimplePipelineContext(interceptors, subject).execute(subject)
     }
 }
 
 
-public abstract class PipelineContext<TSubject>() {
-    internal abstract var subject: TSubject
+public abstract class PipelineContext<T>() {
+    internal abstract var subject: T
     public abstract fun finish()
-    public abstract fun proceedWith(subject: TSubject): TSubject
-    public abstract fun proceed(): TSubject
-    internal abstract fun execute(initial: TSubject): TSubject
+    public abstract fun proceedWith(subject: T): T
+    public abstract fun proceed(): T
+    internal abstract fun execute(initial: T): T
 }
 
 
-internal class DebugPipelineContext<TSubject>(
-    private val interceptors: List<PipelineInterceptor<TSubject>>,
-    subject: TSubject,
-) : PipelineContext<TSubject>() {
+internal class SimplePipelineContext<T>(
+    private val interceptors: List<PipelineInterceptor<T>>,
     /**
      * Subject of this pipeline execution
      */
-    override var subject: TSubject = subject
+    override var subject: T,
+) : PipelineContext<T>() {
 
     private var index = 0
 
@@ -48,7 +47,7 @@ internal class DebugPipelineContext<TSubject>(
     /**
      * Continues execution of the pipeline with the given subject
      */
-    override fun proceedWith(subject: TSubject): TSubject {
+    override fun proceedWith(subject: T): T {
         this.subject = subject
         return proceed()
     }
@@ -56,7 +55,7 @@ internal class DebugPipelineContext<TSubject>(
     /**
      * Continues execution of the pipeline with the same subject
      */
-    override fun proceed(): TSubject {
+    override fun proceed(): T {
         val index = index
         if (index < 0) return subject
 
@@ -68,13 +67,13 @@ internal class DebugPipelineContext<TSubject>(
         return proceedLoop()
     }
 
-    override fun execute(initial: TSubject): TSubject {
+    override fun execute(initial: T): T {
         index = 0
         subject = initial
         return proceed()
     }
 
-    private fun proceedLoop(): TSubject {
+    private fun proceedLoop(): T {
         do {
             val index = index
             if (index == -1) {

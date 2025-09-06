@@ -93,7 +93,7 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
                 metadata = PreProcessorMetadata(),
                 path = path
             )
-            
+
             val processed = composableBlockPreProcessorPipeline.execute(subject)
 
             val renderSubject = ComposablePipelineContent(processed.metadata, source) { mod ->
@@ -142,18 +142,18 @@ public interface BlockItem {
     public val source: String
 
     @Composable
-    public fun Render(scope: ComposeMark, path: String?, modifier: Modifier)
+    public fun Render(composeMark: ComposeMark, path: String?, modifier: Modifier)
 
     public companion object {
         public operator fun invoke(
             source: String,
-            render: @Composable (scope: ComposeMark, path: String?, modifier: Modifier) -> Unit
+            render: @Composable (composeMark: ComposeMark, path: String?, modifier: Modifier) -> Unit
         ): BlockItem = object : BlockItem {
             override val source: String = source
 
             @Composable
-            override fun Render(scope: ComposeMark, path: String?, modifier: Modifier) {
-                render(scope, path, modifier)
+            override fun Render(composeMark: ComposeMark, path: String?, modifier: Modifier) {
+                render(composeMark, path, modifier)
             }
         }
     }
@@ -161,16 +161,16 @@ public interface BlockItem {
 
 public object Block {
     public fun markdown(source: String, path: String? = null): BlockItem =
-        BlockItem(source) { scope, p, modifier ->
-            scope.RenderMarkDownBlock(source, modifier, resolvePath(path, p))
+        BlockItem(source) { cm, p, modifier ->
+            cm.RenderMarkDownBlock(source, modifier, resolvePath(path, p))
         }
 
     public fun composable(
         source: String,
         path: String? = null,
         content: @Composable () -> Unit,
-    ): BlockItem = BlockItem(source) { scope, p, modifier ->
-        scope.RenderComposableBlock(source, modifier, resolvePath(path, p)) { content() }
+    ): BlockItem = BlockItem(source) { cm, p, modifier ->
+        cm.RenderComposableBlock(source, modifier, resolvePath(path, p)) { content() }
     }
 }
 
