@@ -97,7 +97,7 @@ interface Docs {
 ```
 
 Build the project and call `Docs.Intro()` / `Docs.Inline()` like normal composables. Imports inside
-`<Composable>...</Composable>` blocks are automatically lifted to the top of the generated file.
+`<Composable>/*...*/</Composable>` blocks are automatically lifted to the top of the generated file.
 
 ## Directory Aggregation (optional)
 
