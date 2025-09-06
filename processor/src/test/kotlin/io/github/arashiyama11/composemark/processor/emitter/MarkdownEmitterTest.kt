@@ -54,6 +54,44 @@ class MarkdownEmitterTest {
     }
 
     @Test
+    fun `deduplicates directory entries that collide with user-declared functions`() {
+        val classIR = ClassIR(
+            packageName = "com.example",
+            interfaceName = "MyMarkdown",
+            implName = "MyMarkdownImpl",
+            rendererFactoryFqcn = "com.example.MyComposeMark",
+            // user-declared abstract function README
+            functions = listOf(
+                FunctionIR(
+                    name = "README",
+                    parameters = listOf(ParamIR("modifier", "androidx.compose.ui.Modifier")),
+                    source = SourceSpec.FromSource("Hello"),
+                    acceptsModifier = true,
+                    isOverride = true,
+                ),
+            ),
+            contentsPropertyName = "contents",
+            // directory also yields README.md -> functionName README, key README
+            directoryEntries = listOf(
+                io.github.arashiyama11.composemark.processor.model.DirectoryEntryIR(
+                    key = "README",
+                    relativePath = "README.md",
+                    source = SourceSpec.FromPath("README.md", "Hello from file"),
+                    functionName = "README",
+                )
+            )
+        )
+
+        val out = classIR.toFileSpec().toString()
+        // Only one README function should be emitted (the override one)
+        val occurrences = Regex("""override fun README\(modifier: Modifier\)""").findAll(out).count()
+        assertTrue(occurrences == 1, "Expected exactly one README override, got $occurrences in:\n$out")
+        // contents map should contain a single entry for README
+        val mapOccurrences = Regex("""\"README\" to \{ README\(it\) \}""").findAll(out).count()
+        assertTrue(mapOccurrences == 1, "Expected README entry once in contents map, got $mapOccurrences in:\n$out")
+    }
+
+    @Test
     fun `generates path literal for FromPath in blocks and RenderBlocks`() {
         val classIR = ClassIR(
             packageName = "com.example",

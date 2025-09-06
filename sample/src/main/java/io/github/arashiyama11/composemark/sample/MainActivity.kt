@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                 ) { contentPadding ->
-                    Contents.Readme(
+                    Contents.README(
                         Modifier
                             .padding(contentPadding)
                             .verticalScroll(rememberScrollState())
@@ -74,9 +74,11 @@ class MyComposeMark() : ComposeMark(MarkdownRendererImpl()) {
 interface Contents {
     @Composable
     @GenerateMarkdownFromPath("README.md")
-    fun Readme(modifier: Modifier = Modifier)
+    fun README(modifier: Modifier = Modifier)
 
-    val contentsMap: Map<String, @Composable (Modifier) -> Unit>
+    @Composable
+    @GenerateMarkdownFromPath("AGENTS.md")
+    fun Agents()
 
     companion object : Contents by ContentsImpl
 }

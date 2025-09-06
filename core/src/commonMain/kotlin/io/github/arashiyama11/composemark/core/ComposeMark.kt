@@ -26,13 +26,9 @@ public class PreProcessorMetadata {
 
 public class PreProcessorMetadataKey<T>(public val name: String)
 
-public data class RenderPipelineContent(
-    val metadata: PreProcessorMetadata,
-    val content: @Composable (Modifier) -> Unit
-)
-
 public data class ComposablePipelineContent(
     val metadata: PreProcessorMetadata,
+    val source: String,
     val content: @Composable (Modifier) -> Unit
 )
 
@@ -74,7 +70,7 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
             )
             val processed = markdownBlockPreProcessorPipeline.execute(subject)
 
-            val renderSubject = ComposablePipelineContent(processed.metadata) { mod ->
+            val renderSubject = ComposablePipelineContent(processed.metadata, source) { mod ->
                 renderer.RenderMarkdownBlock(mod, processed.path, processed.content)
             }
 
@@ -91,21 +87,24 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
     ) {
         val currentContent = rememberUpdatedState(content)
 
-        val result = remember(path, source) {
+        remember(path, source) {
             val subject = PreProcessorPipelineContent(
                 content = source,
                 metadata = PreProcessorMetadata(),
                 path = path
             )
+            
             val processed = composableBlockPreProcessorPipeline.execute(subject)
 
-            val renderSubject = ComposablePipelineContent(processed.metadata) { mod ->
-                renderer.RenderComposableBlock(mod, processed.path, processed.content) { currentContent.value() }
+            val renderSubject = ComposablePipelineContent(processed.metadata, source) { mod ->
+                renderer.RenderComposableBlock(
+                    mod,
+                    processed.path,
+                    processed.content
+                ) { currentContent.value() }
             }
             renderComposableBlockPipeline.execute(renderSubject)
-        }
-
-        result.content(modifier)
+        }.content(modifier)
     }
 
     @Composable
@@ -125,8 +124,10 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
             blockListPreProcessorPipeline.execute(subject)
         }
 
+        val source = remember(blocks) { blocks.joinToString("\n") { it.source } }
+
         remember(blocksProcessed.content, blocksProcessed.path) {
-            val subject = ComposablePipelineContent(blocksProcessed.metadata) { mod ->
+            val subject = ComposablePipelineContent(blocksProcessed.metadata, source) { mod ->
                 val contents = blocksProcessed.content.map { item ->
                     @Composable { item.Render(this, blocksProcessed.path, Modifier) }
                 }
@@ -137,14 +138,30 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
     }
 }
 
-public fun interface BlockItem {
+public interface BlockItem {
+    public val source: String
+
     @Composable
     public fun Render(scope: ComposeMark, path: String?, modifier: Modifier)
+
+    public companion object {
+        public operator fun invoke(
+            source: String,
+            render: @Composable (scope: ComposeMark, path: String?, modifier: Modifier) -> Unit
+        ): BlockItem = object : BlockItem {
+            override val source: String = source
+
+            @Composable
+            override fun Render(scope: ComposeMark, path: String?, modifier: Modifier) {
+                render(scope, path, modifier)
+            }
+        }
+    }
 }
 
 public object Block {
     public fun markdown(source: String, path: String? = null): BlockItem =
-        BlockItem { scope, p, modifier ->
+        BlockItem(source) { scope, p, modifier ->
             scope.RenderMarkDownBlock(source, modifier, resolvePath(path, p))
         }
 
@@ -152,7 +169,7 @@ public object Block {
         source: String,
         path: String? = null,
         content: @Composable () -> Unit,
-    ): BlockItem = BlockItem { scope, p, modifier ->
+    ): BlockItem = BlockItem(source) { scope, p, modifier ->
         scope.RenderComposableBlock(source, modifier, resolvePath(path, p)) { content() }
     }
 }

@@ -49,8 +49,12 @@ fun KSClassDeclaration.toClassIR(
         rootPath = rootPath,
     )
 
+    // ユーザー定義の抽象関数名と衝突するディレクトリ由来関数は除外
+    val baseFunctionNames = baseFunctions.map { it.name }.toSet()
+    val filteredDirEntries = dirEntries.filter { it.functionName !in baseFunctionNames }
+
     // ディレクトリ由来のComposable関数IRを追加（オーバーライドしない）
-    val dirFunctions: List<FunctionIR> = dirEntries.map { entry ->
+    val dirFunctions: List<FunctionIR> = filteredDirEntries.map { entry ->
         FunctionIR(
             name = entry.functionName,
             parameters = listOf(ParamIR("modifier", "androidx.compose.ui.Modifier")),
@@ -68,7 +72,8 @@ fun KSClassDeclaration.toClassIR(
         rendererFactoryFqcn = rendererFactoryFqcn,
         functions = allFunctions,
         contentsPropertyName = contentsPropertyName,
-        directoryEntries = dirEntries,
+        // 衝突除外後のエントリのみを保持（contentsMap生成時の未定義参照を防止）
+        directoryEntries = filteredDirEntries,
     )
 }
 

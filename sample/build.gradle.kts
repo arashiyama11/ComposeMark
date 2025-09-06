@@ -86,10 +86,6 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
-
-//    constraints {
-//        implementation("org.jetbrains.skiko:skiko:0.9.17")   // 強制上書き
-//    }
 }
 
 allprojects {

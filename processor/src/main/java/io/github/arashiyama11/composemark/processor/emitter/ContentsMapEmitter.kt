@@ -34,6 +34,8 @@ fun ClassIR.toContentsMapProperty(): PropertySpec {
         .addStatement("mapOf(")
         .indent()
 
+    val addedKeys = mutableSetOf<String>()
+
     // 抽象関数に対する実装（isOverride=true）のみをcontentsMapへ登録し、
     // ディレクトリ由来の自動生成関数（isOverride=false）は下のdirectoryEntries側で登録する。
     this.functions
@@ -41,16 +43,20 @@ fun ClassIR.toContentsMapProperty(): PropertySpec {
         .forEach { function ->
             val key = function.name
             initializer.addStatement("%S to { %N(it) },", key, function.name)
+            addedKeys += key
         }
 
     // Directory-based entries
     if (this.directoryEntries.isNotEmpty()) {
         this.directoryEntries.forEach { entry ->
-            initializer.addStatement(
-                "%S to { %N(it) },",
-                entry.key,
-                entry.functionName,
-            )
+            if (entry.key !in addedKeys) {
+                initializer.addStatement(
+                    "%S to { %N(it) },",
+                    entry.key,
+                    entry.functionName,
+                )
+                addedKeys += entry.key
+            }
         }
     }
 
