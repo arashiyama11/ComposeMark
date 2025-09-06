@@ -36,8 +36,8 @@ fun ClassIR.toContentsMapProperty(): PropertySpec {
 
     val addedKeys = mutableSetOf<String>()
 
-    // 抽象関数に対する実装（isOverride=true）のみをcontentsMapへ登録し、
-    // ディレクトリ由来の自動生成関数（isOverride=false）は下のdirectoryEntries側で登録する。
+    // Register only implementations of abstract functions (isOverride=true) into contentsMap.
+    // Directory-based generated functions (isOverride=false) are registered below via directoryEntries.
     this.functions
         .filter { it.isOverride && it.acceptsModifier && it.parameters.size == 1 }
         .forEach { function ->

@@ -63,16 +63,16 @@ class MarkdownComposeProcessor(
                     val classIR = classDeclaration.toClassIR(markdownLoader, logger, rootPath)
                     val fqcn = classIR.packageName + "." + classIR.implName
 
-                    // 同一ラウンドでの重複を検出
+                    // Detect duplicates within the same round
                     if (!generatedFqcns.add(fqcn)) {
-                        logger.error("生成クラス名が同一ラウンド内で衝突しています: $fqcn", classDeclaration)
+                        logger.error("Generated class name conflicts within the same round: $fqcn", classDeclaration)
                         return@forEach
                     }
 
-                    // 既存ソース/過去生成物との衝突を事前検出
+                    // Detect conflicts with existing sources/previously generated classes
                     val existing = resolver.getClassDeclarationByName(resolver.getKSNameFromString(fqcn))
                     if (existing != null) {
-                        logger.error("生成クラス名が既存と衝突しています: $fqcn。別の implName を指定してください", classDeclaration)
+                        logger.error("Generated class name conflicts with existing: $fqcn. Please specify a different implName.", classDeclaration)
                         return@forEach
                     }
                     val fileSpec = classIR.toFileSpec()

@@ -100,7 +100,7 @@ class MarkdownAnalyzerTest {
         """.trimIndent()
 
         val probeData = runProbe(source)
-        // 形式: package|interface|impl|rendererFqcn|contentsProp|fn:name:type:accepts;
+        // Format: package|interface|impl|rendererFqcn|contentsProp|fn:name:type:accepts;
         val parts = probeData.split("|")
         assertEquals("test", parts[0])
         assertEquals("Doc", parts[1])
@@ -136,7 +136,7 @@ class MarkdownAnalyzerTest {
                 SourceFile.kotlin("User.kt", userSource)
             )
             inheritClassPath = true
-            symbolProcessorProviders += AnalyzerProbeProcessorProvider(MarkdownLoader { "[loaded]" }) as SymbolProcessorProvider
+            symbolProcessorProviders += AnalyzerProbeProcessorProvider { "[loaded]" } as SymbolProcessorProvider
             messageOutputStream = System.out
         }
         val result = compilation.compile()

@@ -49,7 +49,7 @@ class MarkdownComposeProcessorTest {
     AnnotationTarget.TYPE,
 
 )
-@Retention(AnnotationRetention.BINARY)   // ← Kotlin の列挙型を使う
+@Retention(AnnotationRetention.BINARY)
 annotation class Composable
 
 inline fun <T> remember(calculation: () -> T): T = calculation()
@@ -97,7 +97,7 @@ fun <T> rememberUpdatedState(newValue: T): State<T> = object: State<T> { overrid
 
     private val composeMarkStub = kotlin("ComposeMark.kt")
 
-    /* ── 注釈スタブ ── */
+    /* Annotation stubs */
     private val generateContentsStub = kotlin("annotation/GenerateMarkdownContents.kt")
     private val generateMarkdownStub = kotlin("annotation/GenerateMarkdownComposable.kt")
 
@@ -212,7 +212,7 @@ class CM: ComposeMark(Renderer()) { override fun setup() {} }
         }
 
         val result = compilation.compile()
-        // implName の解決と生成物の有無のみを検証（テスト環境依存の細かな型解決差で落ちないようにする）
+        // Verify only implName resolution and that outputs are generated (avoid brittle type-resolution diffs)
 
         val implFile = compilation.kspSourcesDir
             .resolve("kotlin")

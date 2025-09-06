@@ -53,7 +53,7 @@ android {
 }
 
 configurations.matching { it.name.endsWith("ProcessorClasspath") }.configureEach {
-    // Skiko の variant 属性 ui に "awt" をセット
+    // Set Skiko variant attribute 'ui' to "awt"
     attributes.attribute(Attribute.of("ui", String::class.java), "awt")
 }
 
@@ -91,7 +91,7 @@ dependencies {
 allprojects {
     afterEvaluate {
         configurations.configureEach {
-            // ui 属性が未設定なら awt を指定
+            // If 'ui' attribute is missing, set it to 'awt'
             if (attributes.getAttribute(Attribute.of("ui", String::class.java)) == null) {
                 attributes.attribute(Attribute.of("ui", String::class.java), "awt")
             }

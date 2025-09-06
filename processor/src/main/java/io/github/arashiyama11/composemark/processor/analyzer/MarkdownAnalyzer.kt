@@ -48,11 +48,11 @@ fun KSClassDeclaration.toClassIR(
         rootPath = rootPath,
     )
 
-    // ユーザー定義の抽象関数名と衝突するディレクトリ由来関数は除外
+    // Exclude directory-based functions that conflict with user-defined abstract function names
     val baseFunctionNames = baseFunctions.map { it.name }.toSet()
     val filteredDirEntries = dirEntries.filter { it.functionName !in baseFunctionNames }
 
-    // ディレクトリ由来のComposable関数IRを追加（オーバーライドしない）
+    // Add directory-based composable function IRs (non-override)
     val dirFunctions: List<FunctionIR> = filteredDirEntries.map { entry ->
         FunctionIR(
             name = entry.functionName,
@@ -71,7 +71,7 @@ fun KSClassDeclaration.toClassIR(
         rendererFactoryFqcn = rendererFactoryFqcn,
         functions = allFunctions,
         contentsPropertyName = contentsPropertyName,
-        // 衝突除外後のエントリのみを保持（contentsMap生成時の未定義参照を防止）
+        // Keep only non-conflicting entries (prevent undefined refs when generating contentsMap)
         directoryEntries = filteredDirEntries,
     )
 }
@@ -95,13 +95,13 @@ private fun resolveImplName(
     val regex = Regex("^[A-Z][A-Za-z0-9_]*$")
     if (!regex.matches(trimmed)) {
         logger.error(
-            "implName が不正です。形式: ^[A-Z][A-Za-z0-9_]*$、予約語不可。例: MyImpl",
+            "Invalid implName. Expected format: ^[A-Z][A-Za-z0-9_]*$, reserved words are not allowed. e.g., MyImpl",
             node
         )
         throw IllegalArgumentException("Invalid implName: $trimmed")
     }
     if (trimmed in KOTLIN_KEYWORDS) {
-        logger.error("implName に予約語は使用できません: $trimmed", node)
+        logger.error("Reserved word not allowed for implName: $trimmed", node)
         throw IllegalArgumentException("Keyword implName: $trimmed")
     }
     return trimmed
