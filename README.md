@@ -1,235 +1,173 @@
-theme: androidx.compose.material3.MaterialTheme
-title: Hello ComposeMark
-footer: &copy; 2024 arashiyama11
----
-
 # ComposeMark
 
-ComposeMark は、Markdown ファイルやインライン Markdown を Jetpack Compose の `@Composable`
-関数として自動生成する KSP ベースのライブラリです。ユーザーは簡潔なアノテーションとインターフェース定義を記述するだけで、Markdown→UI
-のパイプラインを構築できます。
+ComposeMark is a KSP-based tool that turns Markdown files (and inline Markdown) into Jetpack Compose
+`@Composable` functions. It also supports embedding Compose code inside Markdown and provides
+hookable pipelines to customize preprocessing and rendering.
 
-## モジュール構成
+## Modules
 
-* **core**: アノテーション定義・`MarkdownRenderer` の基盤定義
-* **processor**: KSP Processor 実装 (`MarkdownComposeProcessor`)
+- core: Annotations, pipelines, `ComposeMark`, and `MarkdownRenderer` APIs
+- processor: KSP processor that generates Compose implementations
 
-<Composable>
-  androidx.compose.material3.Text("Hello ComposeMark!")
-</Composable>
+## Quick Start
 
-## アノテーション
-
-ComposeMark は以下の主要なアノテーションを提供します。
-
-* `@GenerateMarkdownFromPath`: 関数に Markdown ファイルパスを紐付けます。
-* `@GenerateMarkdownFromSource`: 関数にインライン Markdown ソースを紐付けます。
-* `@GenerateMarkdownContents`: 対象インターフェース／クラスに対して、Composable 実装を一括生成します。
-
-## MarkdownRenderer
-
-`MarkdownRenderer` は、Markdown テキストを描画するための単一メソッドインターフェースです。
+- Add dependencies
 
 ```kotlin
-package io.github.arashiyama11.composemark.core
-
-import androidx.compose.ui.Modifier
-import androidx.compose.runtime.Composable
-
-/** Markdown テキストを描画するレンダラー */
-fun interface MarkdownRenderer {
-    @Composable
-    fun render(modifier: Modifier, text: String)
-}
-```
-
-`render` メソッドの `text` 引数には、Markdown の生テキストが渡されます。Markdown のパースと描画ロジックは
-`render` メソッドの実装に委ねられます。
-
-## KSP Processor の動作概要
-
-KSP Processor は、`@GenerateMarkdownContents` アノテーションが付与されたクラスを探索し、その中の
-`@GenerateMarkdownFromPath` または `@GenerateMarkdownFromSource` を持つ関数を収集します。収集した情報に基づき、Markdown
-テキストを読み込み、対応する `@Composable` 関数を自動生成します。
-
-生成されるコードは、`object <ClassName>Impl : <ClassName>` の形式で、各関数をオーバーライドし、
-`MarkdownRenderer` を使用してMarkdownを描画します。
-
-## 使用例
-
-```kotlin
-import io.github.arashiyama11.composemark.core.DefaultMarkdownRenderer
-import io.github.arashiyama11.composemark.core.annotation.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-
-@GenerateMarkdownContents(DefaultMarkdownRenderer::class)
-interface Docs {
-
-    @Preview
-    @Composable
-    @GenerateMarkdownFromPath("docs/intro.md")
-    fun Intro()
-
-    @Composable
-    @GenerateMarkdownFromSource(
-        "# インライン\n**Markdown** を直接書く例"
-    )
-    fun Preview(modifier: Modifier = Modifier)
-
-    companion object : Docs by DocsImpl
-}
-```
-
-上記の例では、`DocsImpl` が自動生成され、`Docs.Intro()` や `Docs.Preview()` で Composable
-を呼び出すことができます。`@Preview` などのアノテーションは生成後の関数に引き継がれるため、Android
-Studio でプレビュー可能です。
-
-## ビルドとテスト
-
-プロジェクトのビルドとテストはGradleコマンドで実行できます。
-
-```bash
-./gradlew build
-./gradlew test
-```
-
-## ライブラリの公開
-
-Maven Centralへの公開については、[README.md](README.md)の既存のセクションを参照してください。
-
-## ライブラリの使い方
-
-### 依存関係の設定
-
-ルートの `build.gradle.kts` に `mavenCentral()` が含まれていることを確認してください。
-
-```kotlin
-// build.gradle.kts
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-```
-
-次に、モジュールの `build.gradle.kts` に以下の依存関係を追加します。
-
-```kotlin
-// build.gradle.kts
+// module build.gradle.kts
 plugins {
     id("com.google.devtools.ksp")
 }
 
 dependencies {
-    implementation("io.github.arashiyama11:composemark-core:LATEST_VERSION")
-    ksp("io.github.arashiyama11:composemark-processor:LATEST_VERSION")
+    implementation("io.github.arashiyama11:composemark-core:<version>")
+    ksp("io.github.arashiyama11:composemark-processor:<version>")
 }
 ```
 
-`LATEST_VERSION`
-は、[Maven Central](https://search.maven.org/artifact/io.github.arashiyama11/composemark-core)
-で利用可能な最新のバージョンに置き換えてください。
+- Optional: directory aggregation needs a KSP arg
 
-### `MarkdownRenderer` の実装
+```kotlin
+ksp {
+    arg("composemark.root.path", project.projectDir.path)
+}
+```
 
-Markdown をどのように Jetpack Compose の Composable に変換するかを定義する `MarkdownRenderer`
-インターフェースを実装します。
+### Implement a renderer and a `ComposeMark`
 
 ```kotlin
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import io.github.arashiyama11.composemark.core.MarkdownRenderer
+import io.github.arashiyama11.composemark.core.ComposeMark
 
-class CustomMarkdownRenderer : MarkdownRenderer {
+class SimpleRenderer : MarkdownRenderer {
     @Composable
-    override fun Render(modifier: Modifier, text: String) {
-        // ここでMarkdownをパースし、対応するComposableを呼び出します
-        // この例では、単純にテキストを表示します
-        Text(text = text, modifier = modifier)
+    override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {
+        Text(source, modifier)
+    }
+
+    @Composable
+    override fun RenderComposableBlock(
+        modifier: Modifier,
+        path: String?,
+        source: String,
+        content: @Composable () -> Unit
+    ) {
+        content()
+    }
+}
+
+class MyComposeMark : ComposeMark(SimpleRenderer()) {
+    override fun setup() { /* install plugins if needed */
     }
 }
 ```
 
-### インターフェースの定義
-
-`@GenerateMarkdownContents` アノテーションを使用して、Markdown ソースを Composable
-関数にマッピングするインターフェースを定義します。
+### Generate composables from Markdown
 
 ```kotlin
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromPath
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromSource
 
-@GenerateMarkdownContents(CustomMarkdownRenderer::class)
-interface MyMarkdownDocs {
-
-    @Preview
+@GenerateMarkdownContents(MyComposeMark::class)
+interface Docs {
     @Composable
-    @GenerateMarkdownFromPath("path/to/your/markdown.md")
-    fun MarkdownDocument()
+    @GenerateMarkdownFromPath("docs/intro.md")
+    fun Intro(modifier: Modifier = Modifier)
 
     @Composable
     @GenerateMarkdownFromSource(
         """
-        # Hello, ComposeMark!
-        This is an example of inline Markdown.
-        - List item 1
-        - List item 2
-        """
+    # Inline
+    You can write Compose below.
+    <Composable>
+      androidx.compose.material3.Text("Hello from Compose block")
+    </Composable>
+  """.trimIndent()
     )
-    fun InlineMarkdown(modifier: Modifier = Modifier)
+    fun Inline(modifier: Modifier = Modifier)
 
-    companion object : MyMarkdownDocs by MyMarkdownDocsImpl
+    companion object : Docs by DocsImpl
 }
 ```
 
-### Composable の利用
+Build the project and call `Docs.Intro()` / `Docs.Inline()` like normal composables. Imports inside
+`<Composable>...</Composable>` blocks are automatically lifted to the top of the generated file.
 
-ビルド後、KSP によって `MyMarkdownDocsImpl` オブジェクトが生成されます。これにより、インターフェースで定義した関数を
-Composable として直接呼び出すことができます。
+## Directory Aggregation (optional)
+
+Generate functions from a folder and access them via a map. Declare a property with the following
+type and annotate it.
 
 ```kotlin
-import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromDirectory
 
-@Composable
-fun MyScreen() {
-    Column {
-        MyMarkdownDocs.MarkdownDocument()
-        MyMarkdownDocs.InlineMarkdown()
+@GenerateMarkdownContents(MyComposeMark::class)
+interface DirDocs {
+    @GenerateMarkdownFromDirectory(
+        dir = "docs",
+        includes = ["**/*.md", "**/*.mdx"],
+        excludes = []
+    )
+    val contents: Map<String, @Composable (Modifier) -> Unit>
+
+    companion object : DirDocs by DirDocsImpl
+}
+```
+
+KSP reads files under `composemark.root.path/dir`. It generates one composable per file and an
+`override val contents` mapping sanitized file stems (e.g., getting_started → GettingStarted()) to
+those composables.
+
+## Plugins and Pipelines
+
+- ComposeMark subclass: Owns the pipelines and installs plugins.
+- Pipelines: Interception points you can hook into:
+    - Preprocess: markdown block, composable block, block list
+    - Render: markdown block, composable block, block container
+- Plugin API: Use `composeMarkPlugin` or `createComposeMarkPlugin` to register interceptors.
+  Interceptors can read/modify the subject, attach metadata, call `proceedWith(...)`, or `finish()`.
+
+Example: strip front matter and expose title
+
+```kotlin
+import io.github.arashiyama11.composemark.core.*
+
+val TitleKey = PreProcessorMetadataKey<String>("title")
+
+val FrontMatterPlugin = composeMarkPlugin({ Unit }) {
+    onMarkdownBlockPreProcess { sub ->
+        val header = sub.content.lineSequence().takeWhile { it != "---" }.joinToString("\n")
+        val body = sub.content.lineSequence().dropWhile { it != "---" }.drop(1).joinToString("\n")
+        if (header.isNotBlank()) sub.metadata[TitleKey] =
+            header.lines().firstOrNull()?.removePrefix("title:")?.trim()
+        proceedWith(sub.copy(content = body))
+    }
+}
+
+class MyComposeMark : ComposeMark(SimpleRenderer()) {
+    override fun setup() {
+        install(FrontMatterPlugin)
     }
 }
 ```
 
-## APIリファレンス
+## Current Annotations
 
-### アノテーション
+- GenerateMarkdownContents(composeMark: KClass<out ComposeMark>, implName: String = "")
+- GenerateMarkdownFromPath(path: String)
+- GenerateMarkdownFromSource(source: String)
+- GenerateMarkdownFromDirectory(dir: String, includes: Array<String>, excludes: Array<String>) on a
+  property of type `Map<String, @Composable (Modifier) -> Unit>`
 
-* `@GenerateMarkdownContents(renderer: KClass<out MarkdownRenderer>)`
-    * **ターゲット:** `CLASS`
-    * **説明:** 指定された `MarkdownRenderer` を使用して、インターフェース内の
-      `@GenerateMarkdownFromPath` および `@GenerateMarkdownFromSource` アノテーションが付けられた関数の
-      Composable 実装を生成します。
-* `@GenerateMarkdownFromPath(path: String)`
-    * **ターゲット:** `FUNCTION`
-    * **説明:** Composable 関数に、指定されたパスの Markdown
-      ファイルを関連付けます。パスはプロジェクトのルートディレクトリからの相対パスです。
-* `@GenerateMarkdownFromSource(source: String)`
-    * **ターゲット:** `FUNCTION`
-    * **説明:** Composable 関数に、インラインの Markdown 文字列を関連付けます。
+## License
 
-### インターフェース
+Apache-2.0
 
-* `MarkdownRenderer`
-    * **説明:** Markdown テキストを Jetpack Compose の Composable に描画するためのインターフェースです。
-    * **メソッド:**
-        * `@Composable fun Render(modifier: Modifier, text: String)`
-            * `modifier`: Composable に適用する `Modifier`。
-            * `text`: 描画する生の Markdown テキスト。
