@@ -71,7 +71,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    implementation("org.jetbrains.skiko:skiko-awt:0.9.22")
+    implementation("org.jetbrains.skiko:skiko-awt:0.9.24")
     implementation("com.mikepenz:multiplatform-markdown-renderer:0.35.0")
     implementation("com.mikepenz:multiplatform-markdown-renderer-android:0.35.0")
 
