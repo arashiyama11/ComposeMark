@@ -47,7 +47,8 @@ class ComposeMarkGradlePlugin : Plugin<Project> {
                         val arg =
                             kspExt::class.java.methods.firstOrNull { it.name == "arg" && it.parameterCount == 2 }
                         arg?.invoke(kspExt, "composemark.root.path", root)
-                    } catch (_: Throwable) { /* ignore */
+                    } catch (e: Throwable) {
+                        project.logger.warn("Failed to set 'composemark.root.path' argument for KSP extension", e)
                     }
                 }
 
