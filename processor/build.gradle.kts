@@ -12,10 +12,12 @@ version = rootProject.version
 
 gradlePlugin {
     plugins {
-        create("processorPlugin") {
-            id = "io.github.arashiyama11.composemark.processor"
+        create("composemark") {
+            id = "io.github.arashiyama11.composemark"
             implementationClass =
-                "io.github.arashiyama11.composemark.processor.MarkdownComposeProcessor"
+                "io.github.arashiyama11.composemark.processor.gradle.ComposeMarkGradlePlugin"
+            displayName = "ComposeMark Plugin"
+            description = "Wires Markdown changes into KSP task inputs and sets defaults"
         }
     }
 }
@@ -33,6 +35,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(gradleApi())
     implementation(libs.symbol.processing.api)
     implementation(project(":core")) {
         isTransitive = false
