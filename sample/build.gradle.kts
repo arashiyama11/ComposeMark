@@ -74,7 +74,7 @@ dependencies {
     implementation("com.mikepenz:multiplatform-markdown-renderer:0.35.0")
     implementation("com.mikepenz:multiplatform-markdown-renderer-android:0.35.0")
 
-    //implementation(project(":core"))
+    implementation(project(":plugin"))
     implementation(project(":core"))
     ksp(project(":processor"))
 

@@ -9,15 +9,15 @@ public interface ComposeMarkPlugin<out TBuilder> {
 public class ComposeMarkPluginScope(
     private val composeMark: ComposeMark
 ) {
-    public fun onBlockListPreProcess(block: PipelineInterceptor<PreProcessorPipelineContent<List<BlockItem>>>) {
+    public fun onBlockListPreProcess(block: PipelineInterceptor<PreProcessorPipelineContent<BlocksProcessorContext>>) {
         composeMark.blockListPreProcessorPipeline.intercept(block)
     }
 
-    public fun onComposableBlockPreProcess(block: PipelineInterceptor<PreProcessorPipelineContent<String>>) {
+    public fun onComposableBlockPreProcess(block: PipelineInterceptor<PreProcessorPipelineContent<RenderContext>>) {
         composeMark.composableBlockPreProcessorPipeline.intercept(block)
     }
 
-    public fun onMarkdownBlockPreProcess(block: PipelineInterceptor<PreProcessorPipelineContent<String>>) {
+    public fun onMarkdownBlockPreProcess(block: PipelineInterceptor<PreProcessorPipelineContent<RenderContext>>) {
         composeMark.markdownBlockPreProcessorPipeline.intercept(block)
     }
 

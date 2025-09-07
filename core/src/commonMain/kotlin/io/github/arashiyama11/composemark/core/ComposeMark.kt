@@ -1,14 +1,17 @@
 package io.github.arashiyama11.composemark.core
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 
 public data class PreProcessorPipelineContent<T>(
     val content: T,
     val metadata: PreProcessorMetadata,
-    val path: String? = null,
 )
 
 public class PreProcessorMetadata {
@@ -18,6 +21,19 @@ public class PreProcessorMetadata {
         container[key] = value
     }
 
+    public operator fun <T> get(key: PreProcessorMetadataKey<T>): T? {
+        @Suppress("UNCHECKED_CAST")
+        return container[key] as? T
+    }
+
+    public fun snapshot(): ImmutablePreProcessorMetadata =
+        ImmutablePreProcessorMetadata(container.toMap())
+}
+
+@Immutable
+public class ImmutablePreProcessorMetadata internal constructor(
+    private val container: Map<PreProcessorMetadataKey<*>, Any?>
+) {
     public operator fun <T> get(key: PreProcessorMetadataKey<T>): T? {
         @Suppress("UNCHECKED_CAST")
         return container[key] as? T
@@ -32,12 +48,27 @@ public data class ComposablePipelineContent(
     val content: @Composable (Modifier) -> Unit
 )
 
+public data class RenderContext(
+    val source: String,
+    val path: String? = null,
+    val blockIndex: Int,
+    val totalBlocks: Int,
+)
+
+public data class BlocksProcessorContext(
+    val blocks: List<BlockItem>,
+    val path: String? = null,
+)
+
+public val LocalPreProcessorMetadata: ProvidableCompositionLocal<ImmutablePreProcessorMetadata?> =
+    staticCompositionLocalOf { null }
+
 public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
-    public val markdownBlockPreProcessorPipeline: Pipeline<PreProcessorPipelineContent<String>> =
+    public val markdownBlockPreProcessorPipeline: Pipeline<PreProcessorPipelineContent<RenderContext>> =
         Pipeline()
-    public val composableBlockPreProcessorPipeline: Pipeline<PreProcessorPipelineContent<String>> =
+    public val composableBlockPreProcessorPipeline: Pipeline<PreProcessorPipelineContent<RenderContext>> =
         Pipeline()
-    public val blockListPreProcessorPipeline: Pipeline<PreProcessorPipelineContent<List<BlockItem>>> =
+    public val blockListPreProcessorPipeline: Pipeline<PreProcessorPipelineContent<BlocksProcessorContext>> =
         Pipeline()
     public val renderMarkdownBlockPipeline: Pipeline<ComposablePipelineContent> = Pipeline()
     public val renderComposableBlockPipeline: Pipeline<ComposablePipelineContent> = Pipeline()
@@ -57,54 +88,60 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
     }
 
     @Composable
-    public fun RenderMarkDownBlock(
-        source: String,
+    public fun RenderMarkdownBlock(
+        context: RenderContext,
         modifier: Modifier = Modifier,
-        path: String? = null
     ) {
-        remember(path, source) {
-            val subject = PreProcessorPipelineContent(
-                content = source,
-                metadata = PreProcessorMetadata(),
-                path = path
-            )
-            val processed = markdownBlockPreProcessorPipeline.execute(subject)
+        val result = remember(context.path, context.source) {
 
-            val renderSubject = ComposablePipelineContent(processed.metadata, source) { mod ->
-                renderer.RenderMarkdownBlock(mod, processed.path, processed.content)
-            }
+            val processed =
+                markdownBlockPreProcessorPipeline.execute(
+                    PreProcessorPipelineContent(
+                        context,
+                        PreProcessorMetadata(),
+                    )
+                )
+
+
+            val renderSubject =
+                ComposablePipelineContent(processed.metadata, context.source) { mod ->
+                    renderer.RenderMarkdownBlock(processed.content, mod)
+                }
 
             renderMarkdownBlockPipeline.execute(renderSubject)
-        }.content(modifier)
+        }
+        CompositionLocalProvider(LocalPreProcessorMetadata provides result.metadata.snapshot()) {
+            result.content(modifier)
+        }
     }
 
     @Composable
     public fun RenderComposableBlock(
-        source: String,
+        context: RenderContext,
         modifier: Modifier = Modifier,
-        path: String? = null,
         content: @Composable () -> Unit
     ) {
         val currentContent = rememberUpdatedState(content)
 
-        remember(path, source) {
+        val result = remember(context.path, context.source) {
             val subject = PreProcessorPipelineContent(
-                content = source,
+                content = context,
                 metadata = PreProcessorMetadata(),
-                path = path
             )
 
             val processed = composableBlockPreProcessorPipeline.execute(subject)
 
-            val renderSubject = ComposablePipelineContent(processed.metadata, source) { mod ->
-                renderer.RenderComposableBlock(
-                    mod,
-                    processed.path,
-                    processed.content
-                ) { currentContent.value() }
-            }
+            val renderSubject =
+                ComposablePipelineContent(processed.metadata, context.source) { mod ->
+                    renderer.RenderComposableBlock(context, mod) {
+                        currentContent.value()
+                    }
+                }
             renderComposableBlockPipeline.execute(renderSubject)
-        }.content(modifier)
+        }
+        CompositionLocalProvider(LocalPreProcessorMetadata provides result.metadata.snapshot()) {
+            result.content(modifier)
+        }
     }
 
     @Composable
@@ -117,24 +154,35 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
 
         val blocksProcessed = remember(blocks, path) {
             val subject = PreProcessorPipelineContent(
-                content = blocks,
+                content = BlocksProcessorContext(blocks, path),
                 metadata = PreProcessorMetadata(),
-                path = path
             )
             blockListPreProcessorPipeline.execute(subject)
         }
 
         val source = remember(blocks) { blocks.joinToString("\n") { it.source } }
 
-        remember(blocksProcessed.content, blocksProcessed.path) {
+        val result = remember(blocksProcessed.content) {
             val subject = ComposablePipelineContent(blocksProcessed.metadata, source) { mod ->
-                val contents = blocksProcessed.content.map { item ->
-                    @Composable { item.Render(this, blocksProcessed.path, Modifier) }
+                val contents = blocksProcessed.content.blocks.mapIndexed { i, item ->
+                    @Composable {
+                        val ctx = RenderContext(
+                            source = item.source,
+                            path = blocksProcessed.content.path,
+                            blockIndex = i,
+                            totalBlocks = blocksProcessed.content.blocks.size,
+                        )
+                        item.Render(this, ctx, Modifier)
+                    }
                 }
                 renderer.BlockContainer(mod, contents)
             }
             renderBlocksPipeline.execute(subject)
-        }.content(modifier)
+        }
+
+        CompositionLocalProvider(LocalPreProcessorMetadata provides result.metadata.snapshot()) {
+            result.content(modifier)
+        }
     }
 }
 
@@ -142,35 +190,39 @@ public interface BlockItem {
     public val source: String
 
     @Composable
-    public fun Render(composeMark: ComposeMark, path: String?, modifier: Modifier)
+    public fun Render(composeMark: ComposeMark, context: RenderContext, modifier: Modifier)
 
     public companion object {
         public operator fun invoke(
             source: String,
-            render: @Composable (composeMark: ComposeMark, path: String?, modifier: Modifier) -> Unit
+            render: @Composable (composeMark: ComposeMark, context: RenderContext, modifier: Modifier) -> Unit
         ): BlockItem = object : BlockItem {
             override val source: String = source
 
             @Composable
-            override fun Render(composeMark: ComposeMark, path: String?, modifier: Modifier) {
-                render(composeMark, path, modifier)
+            override fun Render(
+                composeMark: ComposeMark,
+                context: RenderContext,
+                modifier: Modifier
+            ) {
+                render(composeMark, context, modifier)
             }
         }
     }
 }
 
 public object Block {
-    public fun markdown(source: String, path: String? = null): BlockItem =
-        BlockItem(source) { cm, p, modifier ->
-            cm.RenderMarkDownBlock(source, modifier, resolvePath(path, p))
+    public fun markdown(source: String, path: String?): BlockItem =
+        BlockItem(source) { cm, ctx, modifier ->
+            cm.RenderMarkdownBlock(ctx.copy(path = path), modifier)
         }
 
     public fun composable(
         source: String,
         path: String? = null,
         content: @Composable () -> Unit,
-    ): BlockItem = BlockItem(source) { cm, p, modifier ->
-        cm.RenderComposableBlock(source, modifier, resolvePath(path, p)) { content() }
+    ): BlockItem = BlockItem(source) { cm, ctx, modifier ->
+        cm.RenderComposableBlock(ctx.copy(path = path), modifier) { content() }
     }
 }
 

@@ -7,13 +7,12 @@ import androidx.compose.ui.Modifier
 public interface MarkdownRenderer {
 
     @Composable
-    public fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String)
+    public fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier)
 
     @Composable
     public fun RenderComposableBlock(
+        context: RenderContext,
         modifier: Modifier,
-        path: String?,
-        source: String,
         content: @Composable () -> Unit,
     )
 

@@ -96,4 +96,3 @@ private val TestPlugin = composeMarkPlugin(::TestPluginConfig) { cfg ->
         proceedWith(subject.copy(content = appended))
     }
 }
-
