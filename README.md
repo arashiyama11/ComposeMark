@@ -17,7 +17,7 @@ hookable pipelines to customize preprocessing and rendering.
 // module build.gradle.kts
 plugins {
     id("com.google.devtools.ksp")
-    id("io.github.arashiyama11.composemark") // watch Markdown changes
+    id("io.github.arashiyama11.composemark") // optional: configure watch patterns via composeMark {}
 }
 
 dependencies {
@@ -26,15 +26,46 @@ dependencies {
 }
 ```
 
-- The plugin sets a default root path and watches `README.md` and `docs/**/*.md(x)` by default.
-  Customize if needed:
+- Note about defaults
+  - The plugin sets a default root path (`projectDir`) and passes it to KSP as `composemark.root.path`.
+  - It does not watch any files by default. Configure patterns as needed:
 
 ```kotlin
 composeMark {
     rootPath = project.projectDir.path
-    watch("guides/**/*.md", "notes/**/*.mdx") // relative to rootPath
+    watch("docs/**/*.md", "docs/**/*.mdx") // relative to rootPath; optional
 }
 ```
+
+### Kotlin Multiplatform (Kotlin 2.x) setup
+
+When using KMP with Kotlin 2.x, wire the generated metadata sources and ensure build order:
+
+```kotlin
+// module build.gradle.kts
+dependencies {
+    // Use the metadata-specific configuration in KMP
+    kspCommonMainMetadata("io.github.arashiyama11:composemark-processor:<version>")
+}
+
+kotlin {
+    sourceSets.named("commonMain") {
+        // Add KSP output to commonMain explicitly (KGP 2.x does not auto-register it)
+        kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
+    }
+}
+
+// Ensure common metadata is generated before compile tasks
+plugins.withId("org.jetbrains.kotlin.multiplatform") {
+    tasks.named {
+        it.startsWith("compileKotlin")
+    }.forEach {
+        it.dependsOn("kspCommonMainKotlinMetadata")
+    }
+}
+```
+
+Tip: See `.github/consumer-test` for a complete, working configuration (KMP setup, `kspCommonMainMetadata`, explicit `srcDir` registration for generated sources, and dependency wiring).
 
 ### Implement a renderer and a `ComposeMark`
 
