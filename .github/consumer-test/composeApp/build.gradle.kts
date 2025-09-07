@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.composeMark)
 }
 
 kotlin {
@@ -87,6 +88,12 @@ kotlin {
             implementation(libs.kotlinx.coroutinesSwing)
         }
     }
+
+}
+
+composeMark {
+    rootPath = "${rootProject.projectDir.absolutePath}/mdcx"
+    watch("*") // relative to rootPath
 }
 
 android {
@@ -116,26 +123,8 @@ android {
     }
 }
 
-afterEvaluate {
-    val needsKsp = setOf(
-        "compileCommonMainKotlinMetadata",
-        "compileKotlinMetadata",
-        "compileKotlinWasmJs",
-        "compileDevelopmentExecutableKotlinWasmJs",
-        "compileProductionExecutableKotlinWasmJs"
-    )
-    tasks.configureEach {
-        if (name in needsKsp) {
-            dependsOn("kspCommonMainKotlinMetadata")
-        }
-    }
-}
-
 dependencies {
-    //add("kspJvm", libs.composemark.processor)
-    //add("kspAndroid", libs.composemark.processor)
-    add("kspCommonMainMetadata", libs.composemark.processor)
-
+    kspCommonMainMetadata(libs.composemark.processor)
     debugImplementation(compose.uiTooling)
 }
 
@@ -151,6 +140,11 @@ compose.desktop {
     }
 }
 
-ksp {
-    arg("composemark.root.path", "${rootProject.projectDir}/mdcx")
+
+plugins.withId("org.jetbrains.kotlin.multiplatform") {
+    tasks.named {
+        it.startsWith("compileKotlin")
+    }.forEach {
+        it.dependsOn("kspCommonMainKotlinMetadata")
+    }
 }

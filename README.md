@@ -11,12 +11,13 @@ hookable pipelines to customize preprocessing and rendering.
 
 ## Quick Start
 
-- Add dependencies
+- Apply KSP and (recommended) the ComposeMark Gradle plugin
 
 ```kotlin
 // module build.gradle.kts
 plugins {
     id("com.google.devtools.ksp")
+    id("io.github.arashiyama11.composemark") // watch Markdown changes
 }
 
 dependencies {
@@ -25,11 +26,13 @@ dependencies {
 }
 ```
 
-- Optional: directory aggregation needs a KSP arg
+- The plugin sets a default root path and watches `README.md` and `docs/**/*.md(x)` by default.
+  Customize if needed:
 
 ```kotlin
-ksp {
-    arg("composemark.root.path", project.projectDir.path)
+composeMark {
+    rootPath = project.projectDir.path
+    watch("guides/**/*.md", "notes/**/*.mdx") // relative to rootPath
 }
 ```
 
@@ -170,4 +173,3 @@ class MyComposeMark : ComposeMark(SimpleRenderer()) {
 ## License
 
 Apache-2.0
-
