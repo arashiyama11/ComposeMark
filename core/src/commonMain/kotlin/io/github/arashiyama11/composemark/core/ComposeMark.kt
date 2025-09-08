@@ -55,6 +55,10 @@ public data class RenderContext(
     val totalBlocks: Int,
 )
 
+public val RenderContext.metadata
+    @Composable
+    get() = LocalPreProcessorMetadata.current
+
 public data class BlocksProcessorContext(
     val blocks: List<BlockItem>,
     val path: String? = null,

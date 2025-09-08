@@ -1,16 +1,10 @@
 package io.github.arashiyama11.composemark.sample
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
@@ -26,7 +20,6 @@ import com.mikepenz.markdown.model.MarkdownTypography
 import io.github.arashiyama11.composemark.core.MarkdownRenderer
 import io.github.arashiyama11.composemark.core.RenderContext
 import io.github.arashiyama11.composemark.plugin.LocalAnchorModifier
-import io.github.arashiyama11.composemark.plugin.LocalBlockHeightModifier
 import org.intellij.markdown.MarkdownTokenTypes
 
 class MarkdownRendererImpl : MarkdownRenderer {
@@ -43,8 +36,7 @@ class MarkdownRendererImpl : MarkdownRenderer {
                     modifier = modifier
                         .semantics {
                             heading()
-                        }
-                        .background(Color.Red),
+                        },
                     content = it.content,
                     node = it.node,
                     style = it.typography.h1,
@@ -59,8 +51,7 @@ class MarkdownRendererImpl : MarkdownRenderer {
                     modifier = modifier
                         .semantics {
                             heading()
-                        }
-                        .background(Color.Green),
+                        },
                     content = it.content,
                     node = it.node,
                     style = it.typography.h2,
@@ -74,8 +65,7 @@ class MarkdownRendererImpl : MarkdownRenderer {
                     modifier = modifier
                         .semantics {
                             heading()
-                        }
-                        .background(Color.Blue),
+                        },
                     content = it.content,
                     node = it.node,
                     style = it.typography.h3,
@@ -90,8 +80,7 @@ class MarkdownRendererImpl : MarkdownRenderer {
                     modifier = modifier
                         .semantics {
                             heading()
-                        }
-                        .background(Color.Cyan),
+                        },
                     content = it.content,
                     node = it.node,
                     style = it.typography.h4,
@@ -106,8 +95,7 @@ class MarkdownRendererImpl : MarkdownRenderer {
                     modifier = modifier
                         .semantics {
                             heading()
-                        }
-                        .background(Color.Magenta),
+                        },
                     content = it.content,
                     node = it.node,
                     style = it.typography.h5,
@@ -146,36 +134,14 @@ class MarkdownRendererImpl : MarkdownRenderer {
         modifier: Modifier,
         content: @Composable (() -> Unit)
     ) {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .background(Color.Gray),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = context.source)
-            }
-            HorizontalDivider()
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                content()
-            }
-        }
+        content()
     }
 
     @Composable
     override fun BlockContainer(modifier: Modifier, contents: List<@Composable (() -> Unit)>) {
         Column(modifier) {
-            contents.forEachIndexed { i, content ->
-                Box(LocalBlockHeightModifier.current(i)) {
-                    content()
-                }
+            contents.forEach { content ->
+                content()
             }
         }
     }

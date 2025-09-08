@@ -9,6 +9,10 @@ hookable pipelines to customize preprocessing and rendering.
 - core: Annotations, pipelines, `ComposeMark`, and `MarkdownRenderer` APIs
 - processor: KSP processor that generates Compose implementations
 
+<Composable>
+  androidx.compose.material3.Text("Hello from Compose block!!!!!!!!")
+</Composable>
+
 ## Quick Start
 
 - Apply KSP and (recommended) the ComposeMark Gradle plugin
@@ -27,8 +31,9 @@ dependencies {
 ```
 
 - Note about defaults
-  - The plugin sets a default root path (`projectDir`) and passes it to KSP as `composemark.root.path`.
-  - It does not watch any files by default. Configure patterns as needed:
+    - The plugin sets a default root path (`projectDir`) and passes it to KSP as
+      `composemark.root.path`.
+    - It does not watch any files by default. Configure patterns as needed:
 
 ```kotlin
 composeMark {
@@ -65,7 +70,9 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
 }
 ```
 
-Tip: See `.github/consumer-test` for a complete, working configuration (KMP setup, `kspCommonMainMetadata`, explicit `srcDir` registration for generated sources, and dependency wiring).
+Tip: See `.github/consumer-test` for a complete, working configuration (KMP setup,
+`kspCommonMainMetadata`, explicit `srcDir` registration for generated sources, and dependency
+wiring).
 
 ### Implement a renderer and a `ComposeMark`
 
@@ -117,10 +124,10 @@ interface Docs {
     @Composable
     @GenerateMarkdownFromSource(
         """
-    # Inline
+    // Inline
     You can write Compose below.
     <Composable>
-      androidx.compose.material3.Text("Hello from Compose block")
+      androidx.compose.material3.Text("Hello from Compose block!!!!!!!!")
     </Composable>
   """.trimIndent()
     )

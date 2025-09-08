@@ -7,20 +7,25 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.arashiyama11.composemark.core.ComposablePipelineContent
@@ -40,7 +45,16 @@ public class PageScaffoldConfig {
     public var tocNumbering: Boolean = false
     public var headingItem: (@Composable (HeadingInfo) -> Unit)? = null
     public var scaffold: (@Composable (PageScaffoldProps, Modifier) -> Unit)? = null
+    public var toc: (@Composable (TocProps, Modifier) -> Unit)? = null
     public var injectHeadingIds: Boolean = false
+    public var scrollState: ScrollState? = null
+    public var scrollWithToc: Boolean = false
+    public var tocPosition: TocPosition = TocPosition.Left
+
+    public fun enableScroll(state: ScrollState, withToc: Boolean = false) {
+        scrollState = state
+        scrollWithToc = withToc
+    }
 
     public fun headingItem(item: @Composable (HeadingInfo) -> Unit) {
         headingItem = item
@@ -48,6 +62,10 @@ public class PageScaffoldConfig {
 
     public fun scaffold(scaffold: @Composable (PageScaffoldProps, Modifier) -> Unit) {
         this.scaffold = scaffold
+    }
+
+    public fun toc(toc: @Composable (TocProps, Modifier) -> Unit) {
+        this.toc = toc
     }
 }
 
@@ -69,6 +87,17 @@ public data class PageScaffoldProps(
     val breadcrumbs: List<Breadcrumb>,
     val content: @Composable (Modifier) -> Unit,
     val jumpTo: suspend (HeadingInfo) -> Unit,
+    val scrollState: ScrollState? = null,
+)
+
+public enum class TocPosition { Top, Left, Right }
+
+public data class TocProps(
+    val headings: List<HeadingInfo>,
+    val numbering: Boolean,
+    val jumpTo: suspend (HeadingInfo) -> Unit,
+    val scrollState: ScrollState? = null,
+    val position: TocPosition = TocPosition.Left,
 )
 
 public val PageHeadingsKey: PreProcessorMetadataKey<List<HeadingInfo>> =
@@ -204,58 +233,80 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                 if (custom != null) PageScaffoldApplied.Custom else PageScaffoldApplied.Default
 
             val wrapped: ComposablePipelineContent = it.copy { mod: Modifier ->
-                val scroll = rememberScrollState()
+                val scroll = config.scrollState
                 val scope = rememberCoroutineScope()
-                val blockHeights = remember { mutableMapOf<Int, Int>() }
 
-                val offsets = remember { mutableMapOf<String, Int>() }
-                val heightMod: @Composable (Int) -> Modifier = { idx ->
-                    Modifier.onGloballyPositioned { coords ->
-                        println("DEBUG: Register height for block $idx to ${coords.size.height}")
-                        blockHeights[idx] = coords.size.height
-                    }
-                }
+                // Anchor registry for BringIntoView strategy
+                val requesters = remember { mutableMapOf<String, BringIntoViewRequester>() }
+                val rects = remember { mutableMapOf<String, Rect>() }
+
 
                 val anchorMod: @Composable (String) -> Modifier = { id ->
-                    Modifier.onGloballyPositioned { coords ->
-                        println("DEBUG: Heading $id at ${coords.positionInParent()}")
-                        val y = coords.positionInParent().y
-                        offsets[id] = y.toInt().coerceAtLeast(0)
-                    }
+                    val requester = remember { BringIntoViewRequester() }
+                    // Keep latest requester registered for this id
+                    SideEffect { requesters[id] = requester }
+                    Modifier
+                        .bringIntoViewRequester(requester)
+                        .onGloballyPositioned { coords ->
+                            val b = coords.boundsInParent()
+                            rects[id] = b
+                            println("DEBUG: Anchor '$id' boundsInParent=$b")
+                        }
                 }
                 val jumpTo: suspend (HeadingInfo) -> Unit = { info ->
-                    blockHeights.filterKeys { it < (info.blockIndex ?: -1) }.values.sum()
-                        .let { sum ->
-                            val y = offsets.firstNotNullOfOrNull {
-                                if (it.key.contains(info.text) || it.key.contains(info.anchor)) it.value else null
-                            }?.plus(sum)
+                    // Find a matching anchor key registered by renderer
+                    val key = requesters.keys.firstOrNull { k ->
+                        k.contains(info.anchor) || k.contains(info.text)
+                    } ?: info.anchor
 
-                            if (y != null) scroll.animateScrollTo(y.coerceAtMost(scroll.maxValue)) else println(
-                                "DEBUG: No offset for ${info.text}/${info.anchor}"
-                            )
+                    val rq = requesters[key]
+                    if (rq != null) {
+                        val rect = rects[key]
+                        try {
+                            if (rect != null) rq.bringIntoView(rect) else rq.bringIntoView()
+                        } catch (t: Throwable) {
+                            println("DEBUG: bringIntoView failed for '$key': ${t.message}")
                         }
-
+                    } else {
+                        println("DEBUG: No requester for '${info.text}/${info.anchor}' (key='$key')")
+                    }
                 }
 
+                // Provide Anchor modifier and a no-op BlockHeight modifier for samples
+                val heightMod: @Composable (Int) -> Modifier = { _ -> Modifier }
                 CompositionLocalProvider(
                     LocalAnchorModifier provides anchorMod,
-                    LocalBlockHeightModifier provides heightMod
+                    LocalBlockHeightModifier provides heightMod,
                 ) {
                     if (custom != null) {
                         val props = PageScaffoldProps(
                             headings = headings,
                             breadcrumbs = it.metadata[BreadcrumbsKey] ?: emptyList(),
-                            content = { innerMod -> it.content(innerMod.verticalScroll(scroll)) },
+                            content = { innerMod -> it.content(innerMod) },
                             jumpTo = jumpTo,
+                            scrollState = scroll,
                         )
-                        custom(props, mod)
+                        val container = if (scroll != null && config.scrollWithToc) mod.verticalScroll(scroll) else mod
+                        custom(props, container)
                     } else {
-                        Row(mod.fillMaxWidth()) {
-                            if (config.enableToc && headings.isNotEmpty()) {
+                        val headingsPresent = config.enableToc && headings.isNotEmpty()
+                        // Common TOC composable (customizable via config.toc)
+                        val TocComposable: @Composable (Modifier) -> Unit = { m ->
+                            val customToc = config.toc
+                            if (customToc != null) {
+                                val props = TocProps(
+                                    headings = headings,
+                                    numbering = config.tocNumbering,
+                                    jumpTo = jumpTo,
+                                    scrollState = scroll,
+                                    position = config.tocPosition,
+                                )
+                                customToc(props, m)
+                            } else {
                                 Column(
-                                    modifier = Modifier
-                                        .padding(end = 16.dp)
-                                        .weight(0.35f, fill = true),
+                                    modifier = m
+                                        .padding(end = if (config.tocPosition == TocPosition.Left) 16.dp else 0.dp)
+                                        .padding(start = if (config.tocPosition == TocPosition.Right) 16.dp else 0.dp),
                                     verticalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Text(
@@ -267,7 +318,6 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                                     headings.forEach { h ->
                                         val item = config.headingItem
                                         if (item != null) {
-                                            // Respect user's custom item; do not force clickable.
                                             item(h)
                                         } else {
                                             DefaultHeadingItem(
@@ -278,10 +328,41 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                                         }
                                     }
                                 }
-                                VerticalDivider(Modifier.fillMaxHeight())
                             }
-                            Column(modifier = Modifier.weight(1f).verticalScroll(scroll)) {
-                                it.content(Modifier)
+                        }
+
+                        val container = if (scroll != null && config.scrollWithToc) mod.fillMaxWidth().verticalScroll(scroll) else mod.fillMaxWidth()
+
+                        when (config.tocPosition) {
+                            TocPosition.Top -> {
+                                Column(container) {
+                                    if (headingsPresent) {
+                                        TocComposable(Modifier.fillMaxWidth())
+                                        HorizontalDivider()
+                                    }
+                                    val contentModifier = if (scroll != null && !config.scrollWithToc) Modifier.verticalScroll(scroll) else Modifier
+                                    Column(modifier = contentModifier.fillMaxWidth()) { it.content(Modifier) }
+                                }
+                            }
+                            TocPosition.Left -> {
+                                Row(container) {
+                                    if (headingsPresent) {
+                                        Column(modifier = Modifier.weight(0.35f, fill = true)) { TocComposable(Modifier.fillMaxWidth()) }
+                                        VerticalDivider(Modifier.fillMaxHeight())
+                                    }
+                                    val contentModifier = if (scroll != null && !config.scrollWithToc) Modifier.weight(1f).verticalScroll(scroll) else Modifier.weight(1f)
+                                    Column(modifier = contentModifier) { it.content(Modifier) }
+                                }
+                            }
+                            TocPosition.Right -> {
+                                Row(container) {
+                                    val contentModifier = if (scroll != null && !config.scrollWithToc) Modifier.weight(1f).verticalScroll(scroll) else Modifier.weight(1f)
+                                    Column(modifier = contentModifier) { it.content(Modifier) }
+                                    if (headingsPresent) {
+                                        VerticalDivider(Modifier.fillMaxHeight())
+                                        Column(modifier = Modifier.weight(0.35f, fill = true)) { TocComposable(Modifier.fillMaxWidth()) }
+                                    }
+                                }
                             }
                         }
                     }
