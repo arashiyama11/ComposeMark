@@ -9,10 +9,6 @@ hookable pipelines to customize preprocessing and rendering.
 - core: Annotations, pipelines, `ComposeMark`, and `MarkdownRenderer` APIs
 - processor: KSP processor that generates Compose implementations
 
-<Composable>
-  androidx.compose.material3.Text("Hello from Compose block!!!!!!!!")
-</Composable>
-
 ## Quick Start
 
 - Apply KSP and (recommended) the ComposeMark Gradle plugin
