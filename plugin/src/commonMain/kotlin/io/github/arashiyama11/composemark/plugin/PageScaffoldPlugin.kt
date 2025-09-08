@@ -1,5 +1,6 @@
 package io.github.arashiyama11.composemark.plugin
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,12 +10,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
@@ -211,13 +211,14 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
             }
 
             subject.metadata[PageHeadingsKey] = headings
+            subject.content.path?.let { p -> subject.metadata[PagePathKey] = p }
             proceed()
         }
 
         onRenderBlocks {
 
             val headings =
-                it.metadata[PageHeadingsKey] ?: parseHeadingsFromMarkdownSource(it.source)
+                it.metadata[PageHeadingsKey] ?: parseHeadingsFromMarkdownSource(it.fullSource)
 
             if (headings.isNotEmpty()) {
                 it.metadata[PageHeadingsKey] = headings
@@ -286,7 +287,8 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                             jumpTo = jumpTo,
                             scrollState = scroll,
                         )
-                        val container = if (scroll != null && config.scrollWithToc) mod.verticalScroll(scroll) else mod
+                        val container =
+                            if (scroll != null && config.scrollWithToc) mod.verticalScroll(scroll) else mod
                         custom(props, container)
                     } else {
                         val headingsPresent = config.enableToc && headings.isNotEmpty()
@@ -331,7 +333,9 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                             }
                         }
 
-                        val container = if (scroll != null && config.scrollWithToc) mod.fillMaxWidth().verticalScroll(scroll) else mod.fillMaxWidth()
+                        val container =
+                            if (scroll != null && config.scrollWithToc) mod.fillMaxWidth()
+                                .verticalScroll(scroll) else mod.fillMaxWidth()
 
                         when (config.tocPosition) {
                             TocPosition.Top -> {
@@ -340,27 +344,52 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                                         TocComposable(Modifier.fillMaxWidth())
                                         HorizontalDivider()
                                     }
-                                    val contentModifier = if (scroll != null && !config.scrollWithToc) Modifier.verticalScroll(scroll) else Modifier
-                                    Column(modifier = contentModifier.fillMaxWidth()) { it.content(Modifier) }
+                                    val contentModifier =
+                                        if (scroll != null && !config.scrollWithToc) Modifier.verticalScroll(
+                                            scroll
+                                        ) else Modifier
+                                    Column(modifier = contentModifier.fillMaxWidth()) {
+                                        it.content(
+                                            Modifier
+                                        )
+                                    }
                                 }
                             }
+
                             TocPosition.Left -> {
                                 Row(container) {
                                     if (headingsPresent) {
-                                        Column(modifier = Modifier.weight(0.35f, fill = true)) { TocComposable(Modifier.fillMaxWidth()) }
+                                        Column(
+                                            modifier = Modifier.weight(
+                                                0.35f,
+                                                fill = true
+                                            )
+                                        ) { TocComposable(Modifier.fillMaxWidth()) }
                                         VerticalDivider(Modifier.fillMaxHeight())
                                     }
-                                    val contentModifier = if (scroll != null && !config.scrollWithToc) Modifier.weight(1f).verticalScroll(scroll) else Modifier.weight(1f)
+                                    val contentModifier =
+                                        if (scroll != null && !config.scrollWithToc) Modifier.weight(
+                                            1f
+                                        ).verticalScroll(scroll) else Modifier.weight(1f)
                                     Column(modifier = contentModifier) { it.content(Modifier) }
                                 }
                             }
+
                             TocPosition.Right -> {
                                 Row(container) {
-                                    val contentModifier = if (scroll != null && !config.scrollWithToc) Modifier.weight(1f).verticalScroll(scroll) else Modifier.weight(1f)
+                                    val contentModifier =
+                                        if (scroll != null && !config.scrollWithToc) Modifier.weight(
+                                            1f
+                                        ).verticalScroll(scroll) else Modifier.weight(1f)
                                     Column(modifier = contentModifier) { it.content(Modifier) }
                                     if (headingsPresent) {
                                         VerticalDivider(Modifier.fillMaxHeight())
-                                        Column(modifier = Modifier.weight(0.35f, fill = true)) { TocComposable(Modifier.fillMaxWidth()) }
+                                        Column(
+                                            modifier = Modifier.weight(
+                                                0.35f,
+                                                fill = true
+                                            )
+                                        ) { TocComposable(Modifier.fillMaxWidth()) }
                                     }
                                 }
                             }

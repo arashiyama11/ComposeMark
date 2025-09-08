@@ -19,6 +19,25 @@ class ComposableFunEmitterTest {
     }
 
     @Test
+    fun `attributes on Composable tag are parsed and emitted to Block_composable`() {
+        val ir = FunctionIR(
+            name = "WithAttrs",
+            parameters = emptyList(),
+            source = SourceSpec.FromSource("""
+                Before
+                <Composable sample lang=\"kotlin\" data-x='1'>content()</Composable>
+                After
+            """.trimIndent()),
+            acceptsModifier = false
+        )
+
+        val out = renderFunction(ir)
+        println(out)
+        // attrs map is emitted with normalized boolean true for bare `sample`
+        assertContains(out, "Block.composable(source = \"content()\", attrs = mapOf(\"sample\" to \"true\", \"lang\" to \"kotlin\", \"data-x\" to \"1\"))")
+    }
+
+    @Test
     fun `single markdown without modifier param renders with default Modifier`() {
         val ir = FunctionIR(
             name = "About",
@@ -33,7 +52,7 @@ class ComposableFunEmitterTest {
         assertContains(out, "val blocks = remember {")
         assertContains(out, "listOf(")
         assertContains(out, "Block.markdown(\"Hello\", null)")
-        assertContains(out, "renderer.RenderBlocks(blocks, androidx.compose.ui.Modifier, null)")
+        assertContains(out, "renderer.RenderBlocks(blocks, androidx.compose.ui.Modifier, null, fullSource = \"  Hello  \")")
         // remember block is always emitted
         assertContains(out, "val renderer = remember { com.example.MyComposeMark() }")
     }
@@ -67,7 +86,7 @@ class ComposableFunEmitterTest {
         assertContains(out, "listOf(")
         assertContains(out, "Block.markdown(\"A\", null)")
         assertContains(out, "Block.composable(source = \"B\")")
-        assertContains(out, "renderer.RenderBlocks(blocks, androidx.compose.ui.Modifier, null)")
+        assertContains(out, "renderer.RenderBlocks(blocks, androidx.compose.ui.Modifier, null, fullSource = \"A<Composable>B\")")
         // Composable section body is emitted as-is
         assertContains(out, "B")
     }
@@ -90,6 +109,6 @@ class ComposableFunEmitterTest {
         // composable section stays path-less (inherits via RenderBlocks)
         assertContains(out, "Block.composable(source = \"name\")")
         // RenderBlocks receives the path literal for inheritance
-        assertContains(out, "renderer.RenderBlocks(blocks, modifier, \"docs/readme.md\")")
+        assertContains(out, "renderer.RenderBlocks(blocks, modifier, \"docs/readme.md\", fullSource = \"Hello <Composable>name</Composable>\")")
     }
 }

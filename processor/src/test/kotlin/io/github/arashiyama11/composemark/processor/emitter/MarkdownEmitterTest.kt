@@ -48,7 +48,7 @@ class MarkdownEmitterTest {
         has("val renderer = remember { com.example.MyComposeMark() }")
         has("val blocks = remember {")
         has("Block.markdown(\"Hello World!\", null)")
-        has("renderer.RenderBlocks(blocks, modifier, null)")
+        has("renderer.RenderBlocks(blocks, modifier, null, fullSource = \"Hello World!\")")
         has("@Composable\n  override fun GreetingWithName(modifier: Modifier, name: String)")
         has("Block.composable(source = \"name\")")
     }
@@ -120,6 +120,6 @@ class MarkdownEmitterTest {
         has("@Composable\n  override fun Readme(modifier: Modifier)")
         // Path literal appears in markdown and RenderBlocks
         has("Block.markdown(\"Hello World!\", \"docs/x.md\")")
-        has("renderer.RenderBlocks(blocks, modifier, \"docs/x.md\")")
+        has("renderer.RenderBlocks(blocks, modifier, \"docs/x.md\", fullSource = \"Hello World!\")")
     }
 }

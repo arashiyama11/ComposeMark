@@ -64,14 +64,14 @@ private data class ImportDecl(
 
 // Collect import lines from <Composable> sections and return the body without them
 private fun extractImportsFromComposableSections(markdown: String): Pair<String, List<ImportDecl>> {
-    val startTag = "<Composable>"
+    val startPrefix = "<Composable"
     val endTag = "</Composable>"
     var cursor = 0
     val sb = StringBuilder()
     val imports = LinkedHashSet<ImportDecl>()
 
     while (cursor < markdown.length) {
-        val startIndex = markdown.indexOf(startTag, cursor)
+        val startIndex = markdown.indexOf(startPrefix, cursor)
         if (startIndex == -1) {
             // append the rest as-is
             sb.append(markdown.substring(cursor))
@@ -80,7 +80,14 @@ private fun extractImportsFromComposableSections(markdown: String): Pair<String,
         // write preceding Markdown section
         if (startIndex > cursor) sb.append(markdown.substring(cursor, startIndex))
 
-        val contentStart = startIndex + startTag.length
+        val openEnd = markdown.indexOf('>', startIndex)
+        if (openEnd == -1) {
+            // malformed, append the rest and finish
+            sb.append(markdown.substring(startIndex))
+            break
+        }
+        val openTag = markdown.substring(startIndex, openEnd + 1)
+        val contentStart = openEnd + 1
         val endIndex = markdown.indexOf(endTag, contentStart)
         val compBody = if (endIndex == -1) markdown.substring(contentStart) else markdown.substring(contentStart, endIndex)
 
@@ -109,7 +116,7 @@ private fun extractImportsFromComposableSections(markdown: String): Pair<String,
         }.trimEnd('\n')
 
         if (cleanedComposable.isNotBlank()) {
-            sb.append(startTag)
+            sb.append(openTag)
             sb.append(cleanedComposable)
             sb.append(endTag)
         }

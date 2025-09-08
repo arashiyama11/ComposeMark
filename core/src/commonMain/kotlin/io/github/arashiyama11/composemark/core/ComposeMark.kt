@@ -45,22 +45,26 @@ public class PreProcessorMetadataKey<T>(public val name: String)
 public data class ComposablePipelineContent(
     val metadata: PreProcessorMetadata,
     val source: String,
+    val fullSource: String,
     val content: @Composable (Modifier) -> Unit
 )
 
 public data class RenderContext(
     val source: String,
+    val fullSource: String,
     val path: String? = null,
     val blockIndex: Int,
     val totalBlocks: Int,
+    val attrs: Map<String, String?> = emptyMap(),
 )
 
-public val RenderContext.metadata
+public val RenderContext.metadata: ImmutablePreProcessorMetadata?
     @Composable
     get() = LocalPreProcessorMetadata.current
 
 public data class BlocksProcessorContext(
     val blocks: List<BlockItem>,
+    val fullSource: String,
     val path: String? = null,
 )
 
@@ -108,7 +112,11 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
 
 
             val renderSubject =
-                ComposablePipelineContent(processed.metadata, context.source) { mod ->
+                ComposablePipelineContent(
+                    processed.metadata,
+                    context.source,
+                    context.fullSource
+                ) { mod ->
                     renderer.RenderMarkdownBlock(processed.content, mod)
                 }
 
@@ -136,7 +144,11 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
             val processed = composableBlockPreProcessorPipeline.execute(subject)
 
             val renderSubject =
-                ComposablePipelineContent(processed.metadata, context.source) { mod ->
+                ComposablePipelineContent(
+                    processed.metadata,
+                    context.source,
+                    context.fullSource
+                ) { mod ->
                     renderer.RenderComposableBlock(context, mod) {
                         currentContent.value()
                     }
@@ -152,34 +164,47 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
     public fun RenderBlocks(
         blocks: List<BlockItem>,
         modifier: Modifier = Modifier,
-        path: String? = null
+        path: String? = null,
+        fullSource: String? = null,
     ) {
         if (blocks.isEmpty()) return
 
-        val blocksProcessed = remember(blocks, path) {
+        val computedFullSource = remember(blocks) { blocks.joinToString("\n") { it.source } }
+
+        val blocksProcessed = remember(blocks, path, fullSource) {
             val subject = PreProcessorPipelineContent(
-                content = BlocksProcessorContext(blocks, path),
+                content = BlocksProcessorContext(
+                    blocks = blocks,
+                    fullSource = fullSource ?: computedFullSource,
+                    path = path,
+                ),
                 metadata = PreProcessorMetadata(),
             )
             blockListPreProcessorPipeline.execute(subject)
         }
 
-        val source = remember(blocks) { blocks.joinToString("\n") { it.source } }
-
         val result = remember(blocksProcessed.content) {
-            val subject = ComposablePipelineContent(blocksProcessed.metadata, source) { mod ->
-                val contents = blocksProcessed.content.blocks.mapIndexed { i, item ->
-                    @Composable {
-                        val ctx = RenderContext(
-                            source = item.source,
-                            path = blocksProcessed.content.path,
-                            blockIndex = i,
-                            totalBlocks = blocksProcessed.content.blocks.size,
-                        )
-                        item.Render(this, ctx, Modifier)
+            val subject = ComposablePipelineContent(
+                metadata = blocksProcessed.metadata,
+                source = blocksProcessed.content.fullSource,
+                fullSource = blocksProcessed.content.fullSource,
+            ) { mod ->
+                val entries = blocksProcessed.content.blocks.mapIndexed { i, item ->
+                    val meta = (item as? BlockItemMeta)
+                    val resolvedPath = resolvePath(meta?.explicitPath, blocksProcessed.content.path)
+                    val ctx = RenderContext(
+                        source = item.source,
+                        fullSource = blocksProcessed.content.fullSource,
+                        path = resolvedPath,
+                        blockIndex = i,
+                        totalBlocks = blocksProcessed.content.blocks.size,
+                        attrs = meta?.attrs ?: emptyMap(),
+                    )
+                    BlockEntry(ctx) { childMod ->
+                        item.Render(this, ctx, childMod)
                     }
                 }
-                renderer.BlockContainer(mod, contents)
+                renderer.BlockContainer(mod, entries)
             }
             renderBlocksPipeline.execute(subject)
         }
@@ -215,18 +240,46 @@ public interface BlockItem {
     }
 }
 
+internal interface BlockItemMeta {
+    val attrs: Map<String, String?>
+    val explicitPath: String?
+}
+
 public object Block {
     public fun markdown(source: String, path: String?): BlockItem =
-        BlockItem(source) { cm, ctx, modifier ->
-            cm.RenderMarkdownBlock(ctx.copy(path = path), modifier)
+        object : BlockItem, BlockItemMeta {
+            override val source: String = source
+            override val attrs: Map<String, String?> = emptyMap()
+            override val explicitPath: String? = path
+
+            @Composable
+            override fun Render(
+                composeMark: ComposeMark,
+                context: RenderContext,
+                modifier: Modifier
+            ) {
+                composeMark.RenderMarkdownBlock(context.copy(path = path), modifier)
+            }
         }
 
     public fun composable(
         source: String,
         path: String? = null,
+        attrs: Map<String, String?> = emptyMap(),
         content: @Composable () -> Unit,
-    ): BlockItem = BlockItem(source) { cm, ctx, modifier ->
-        cm.RenderComposableBlock(ctx.copy(path = path), modifier) { content() }
+    ): BlockItem = object : BlockItem, BlockItemMeta {
+        override val source: String = source
+        override val attrs: Map<String, String?> = attrs
+        override val explicitPath: String? = path
+
+        @Composable
+        override fun Render(
+            composeMark: ComposeMark,
+            context: RenderContext,
+            modifier: Modifier
+        ) {
+            composeMark.RenderComposableBlock(context.copy(path = path, attrs = attrs), modifier) { content() }
+        }
     }
 }
 

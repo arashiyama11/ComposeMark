@@ -19,10 +19,15 @@ public interface MarkdownRenderer {
     @Composable
     public fun BlockContainer(
         modifier: Modifier,
-        contents: List<@Composable () -> Unit>
+        contents: List<BlockEntry>
     ) {
         Column(modifier) {
-            contents.forEach { it() }
+            contents.forEach { it.content(Modifier) }
         }
     }
 }
+
+public data class BlockEntry(
+    val context: RenderContext,
+    val content: @Composable (Modifier) -> Unit,
+)

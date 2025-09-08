@@ -43,13 +43,12 @@ class PageScaffoldPluginTest {
 
     private class TestRenderer : MarkdownRenderer {
         @Composable
-        override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
+        override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {}
 
         @Composable
         override fun RenderComposableBlock(
+            context: RenderContext,
             modifier: Modifier,
-            path: String?,
-            source: String,
             content: @Composable () -> Unit,
         ) { content() }
     }
@@ -65,9 +64,8 @@ class PageScaffoldPluginTest {
 
         val meta = PreProcessorMetadata()
         val input = PreProcessorPipelineContent(
-            content = listOf<BlockItem>(),
+            content = BlocksProcessorContext(blocks = listOf(), fullSource = "", path = "/docs/guide/intro.md"),
             metadata = meta,
-            path = "/docs/guide/intro.md"
         )
         val out = cm.blockListPreProcessorPipeline.execute(input)
         val stored = out.metadata[PagePathKey]
@@ -83,6 +81,7 @@ class PageScaffoldPluginTest {
         val subject = ComposablePipelineContent(
             metadata = meta,
             source = "# Title\n## Sub A",
+            fullSource = "# Title\n## Sub A",
         ) { }
 
         val result = cm.renderBlocksPipeline.execute(subject)
@@ -103,18 +102,23 @@ class PageScaffoldPluginTest {
         cm.install(PageScaffoldPlugin) { injectHeadingIds = true }
 
         val input = PreProcessorPipelineContent(
-            content = """
+            content = RenderContext(
+                source = """
                 # Title
                 ## Sub
                 ## Sub
                 ### Another Title
             """.trimIndent(),
+                fullSource = "# Title\n## Sub\n## Sub\n### Another Title",
+                path = null,
+                blockIndex = 0,
+                totalBlocks = 1,
+            ),
             metadata = PreProcessorMetadata(),
-            path = null
         )
 
         val out = cm.markdownBlockPreProcessorPipeline.execute(input)
-        val lines = out.content.lines()
+        val lines = out.content.source.lines()
         kotlin.test.assertEquals("# Title {#title}", lines[0])
         kotlin.test.assertEquals("## Sub {#sub}", lines[1])
         kotlin.test.assertEquals("## Sub {#sub-2}", lines[2])
@@ -135,6 +139,7 @@ class PageScaffoldPluginTest {
         val subject = ComposablePipelineContent(
             metadata = meta,
             source = "# Title\n## Sub A",
+            fullSource = "# Title\n## Sub A",
         ) { }
 
         val result = cm.renderBlocksPipeline.execute(subject)
