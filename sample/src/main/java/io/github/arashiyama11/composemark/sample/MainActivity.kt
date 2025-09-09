@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
                             .padding(contentPadding)
                     ) {
                         Contents.README(
-                            Modifier//.verticalScroll(rememberScrollState())
+                            Modifier
                         )
                     }
                 }
