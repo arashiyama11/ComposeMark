@@ -17,6 +17,7 @@ import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.elements.MarkdownText
 import com.mikepenz.markdown.model.MarkdownColors
 import com.mikepenz.markdown.model.MarkdownTypography
+import io.github.arashiyama11.composemark.core.BlockEntry
 import io.github.arashiyama11.composemark.core.MarkdownRenderer
 import io.github.arashiyama11.composemark.core.RenderContext
 import io.github.arashiyama11.composemark.plugin.LocalAnchorModifier
@@ -138,10 +139,10 @@ class MarkdownRendererImpl : MarkdownRenderer {
     }
 
     @Composable
-    override fun BlockContainer(modifier: Modifier, contents: List<@Composable (() -> Unit)>) {
+    override fun BlockContainer(modifier: Modifier, contents: List<BlockEntry>) {
         Column(modifier) {
-            contents.forEach { content ->
-                content()
+            contents.forEach {
+                it.content(Modifier)
             }
         }
     }

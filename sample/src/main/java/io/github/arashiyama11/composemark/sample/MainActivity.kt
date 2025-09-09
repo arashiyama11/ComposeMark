@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
                         Modifier
                             .padding(contentPadding)
                     ) {
-                        Contents.LICENSE(
+                        Contents.README(
                             Modifier//.verticalScroll(rememberScrollState())
                         )
                     }
@@ -54,7 +54,7 @@ class MyComposeMark() : ComposeMark(MarkdownRendererImpl()) {
 interface Contents {
     @Composable
     @GenerateMarkdownFromPath("README.md")
-    fun LICENSE(modifier: Modifier = Modifier)
+    fun README(modifier: Modifier = Modifier)
 
     companion object : Contents by ContentsImpl
 }

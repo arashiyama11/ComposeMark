@@ -129,31 +129,6 @@ internal fun parseHeadingsFromMarkdownSource(source: String): List<HeadingInfo> 
     }.toList()
 }
 
-internal fun computeHeadingPositions(source: String, parsed: List<HeadingInfo>): Map<String, Int> {
-    if (parsed.isEmpty()) return emptyMap()
-    val result = mutableMapOf<String, Int>()
-    var offset = 0
-    val lines = source.lines()
-    var idxParsed = 0
-    val lineRegex = "^(#{1,6})\\s+(.+)$".toRegex()
-    for (line in lines) {
-        val m = lineRegex.find(line.trim())
-        if (m != null && idxParsed < parsed.size) {
-            val h = parsed[idxParsed]
-            result[h.anchor] = offset
-            idxParsed++
-        }
-        offset += line.length + 1
-        if (idxParsed >= parsed.size) break
-    }
-    return result
-}
-
-internal fun computeHeadingRatios(source: String, parsed: List<HeadingInfo>): Map<String, Float> {
-    val total = source.length.coerceAtLeast(1)
-    return computeHeadingPositions(source, parsed).mapValues { (_, pos) -> pos.toFloat() / total }
-}
-
 internal fun computeBreadcrumbsFromPath(path: String): List<Breadcrumb> {
     val clean = path.trim().trim('/')
     if (clean.isEmpty()) return emptyList()
@@ -269,7 +244,7 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                             println("DEBUG: bringIntoView failed for '$key': ${t.message}")
                         }
                     } else {
-                        println("DEBUG: No requester for '${info.text}/${info.anchor}' (key='$key')")
+                        println("DEBUG: No requester for '${info.text}/${info.anchor}' (key='$key') ${requesters.keys}")
                     }
                 }
 

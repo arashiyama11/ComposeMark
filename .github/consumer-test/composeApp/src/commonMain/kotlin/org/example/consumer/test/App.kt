@@ -1,5 +1,6 @@
 package org.example.consumer.test
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -19,8 +20,8 @@ import io.github.arashiyama11.composemark.core.ComposeMark
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromPath
-import io.github.arashiyama11.composemark.plugin.HeadingEnhancerPlugin
 import io.github.arashiyama11.composemark.plugin.PageScaffoldPlugin
+import io.github.arashiyama11.composemark.plugin.TocPosition
 
 @Composable
 @Preview
@@ -33,8 +34,7 @@ fun App() {
         MaterialTheme {
             SelectionContainer {
                 Column(
-                    modifier = Modifier.padding(horizontal = 48.dp)
-                        .verticalScroll(rememberScrollState()),
+                    modifier = Modifier.padding(horizontal = 48.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
@@ -51,11 +51,10 @@ class MyComposeMark() : ComposeMark(MarkdownRendererImpl()) {
         install(SampleCodePlugin) {
             orientation = SampleCodeConfig.Orientation.HORIZONTAL
         }
-//        install(HeadingEnhancerPlugin) {
-//            addNumbering = true
-//        }
+
         install(PageScaffoldPlugin) {
-            enableToc = true
+            enableScroll(ScrollState(0), withToc = true)
+            tocPosition = TocPosition.Right
             showBreadcrumbs = true
         }
     }
