@@ -102,8 +102,8 @@ publishing {
         named<MavenPublication>("kotlinMultiplatform") {
             artifactId = "composemark-plugin"
             pom {
-                name.set("ComposeMark Core")
-                description.set("Core of ComposeMark KSP processor")
+                name.set("ComposeMark Plugin")
+                description.set("Plugin for ComposeMark")
                 licenses {
                     license {
                         name.set("Apache-2.0")
