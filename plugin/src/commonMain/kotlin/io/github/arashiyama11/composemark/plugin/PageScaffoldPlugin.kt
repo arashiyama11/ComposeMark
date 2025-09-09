@@ -226,7 +226,6 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                         .onGloballyPositioned { coords ->
                             val b = coords.boundsInParent()
                             rects[id] = b
-                            println("DEBUG: Anchor '$id' boundsInParent=$b")
                         }
                 }
                 val jumpTo: suspend (HeadingInfo) -> Unit = { info ->
@@ -241,10 +240,8 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                         try {
                             if (rect != null) rq.bringIntoView(rect) else rq.bringIntoView()
                         } catch (t: Throwable) {
-                            println("DEBUG: bringIntoView failed for '$key': ${t.message}")
                         }
                     } else {
-                        println("DEBUG: No requester for '${info.text}/${info.anchor}' (key='$key') ${requesters.keys}")
                     }
                 }
 
