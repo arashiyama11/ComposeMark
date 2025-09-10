@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")// version "8.12.0"
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose") version "2.2.0"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
     alias(libs.plugins.ksp)
 }
 
