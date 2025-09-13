@@ -7,23 +7,27 @@ import androidx.compose.ui.Modifier
 public interface MarkdownRenderer {
 
     @Composable
-    public fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String)
+    public fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier)
 
     @Composable
     public fun RenderComposableBlock(
+        context: RenderContext,
         modifier: Modifier,
-        path: String?,
-        source: String,
         content: @Composable () -> Unit,
     )
 
     @Composable
     public fun BlockContainer(
         modifier: Modifier,
-        contents: List<@Composable () -> Unit>
+        contents: List<BlockEntry>
     ) {
         Column(modifier) {
-            contents.forEach { it() }
+            contents.forEach { it.content(Modifier) }
         }
     }
 }
+
+public data class BlockEntry(
+    val context: RenderContext,
+    val content: @Composable (Modifier) -> Unit,
+)

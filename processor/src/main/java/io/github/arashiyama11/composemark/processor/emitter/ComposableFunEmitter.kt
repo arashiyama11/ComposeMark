@@ -79,10 +79,22 @@ private fun emitBlocksAndRender(
 
             is MarkdownSection.Composable -> {
                 builder.add(
-                    "  %T.composable(source = %S) {\n",
+                    "  %T.composable(source = %S",
                     blockClassName,
                     section.content.trim()
                 )
+                if (section.attrs.isNotEmpty()) {
+                    val pairs = section.attrs.entries.joinToString(", ") { (k, v) -> "%S to %S" }
+                    val args = mutableListOf<Any>()
+                    section.attrs.forEach { (k, v) ->
+                        args += k; args += (v ?: "")
+                    }
+                    builder.add(
+                        ", attrs = mapOf($pairs)",
+                        *args.toTypedArray()
+                    )
+                }
+                builder.add(") {\n")
                 builder.addStatement("  %L", section.content.trim())
                 builder.add("},\n")
             }
@@ -91,24 +103,29 @@ private fun emitBlocksAndRender(
     builder.add("  )\n")
     builder.add("}\n")
 
-    builder.addStatement("renderer.RenderBlocks(blocks, %L, %L)", modifierParamName, pathLiteral)
+    builder.addStatement(
+        "renderer.RenderBlocks(blocks, %L, %L, fullSource = %S)",
+        modifierParamName,
+        pathLiteral,
+        markdown,
+    )
 }
 
 private sealed interface MarkdownSection {
     val content: String
 
     data class Markdown(override val content: String) : MarkdownSection
-    data class Composable(override val content: String) : MarkdownSection
+    data class Composable(override val content: String, val attrs: Map<String, String?>) : MarkdownSection
 }
 
 private fun markdownToSections(markdown: String): List<MarkdownSection> {
     val sections = mutableListOf<MarkdownSection>()
     var cursor = 0
-    val startTag = "<Composable>"
+    val startPrefix = "<Composable"
     val endTag = "</Composable>"
 
     while (cursor < markdown.length) {
-        val startIndex = markdown.indexOf(startTag, cursor)
+        val startIndex = markdown.indexOf(startPrefix, cursor)
         if (startIndex == -1) {
             if (cursor < markdown.length) {
                 sections.add(MarkdownSection.Markdown(markdown.substring(cursor)))
@@ -118,16 +135,92 @@ private fun markdownToSections(markdown: String): List<MarkdownSection> {
         if (startIndex > cursor) {
             sections.add(MarkdownSection.Markdown(markdown.substring(cursor, startIndex)))
         }
-        val contentStart = startIndex + startTag.length
+        val openEnd = markdown.indexOf('>', startIndex)
+        if (openEnd == -1) {
+            // malformed opening; treat rest as markdown
+            sections.add(MarkdownSection.Markdown(markdown.substring(startIndex)))
+            break
+        }
+        val openTag = markdown.substring(startIndex, openEnd + 1)
+        val attrsText = openTag.removePrefix("<Composable").removeSuffix(">")
+        val attrs = parseAttributes(attrsText)
+        val contentStart = openEnd + 1
         val endIndex = markdown.indexOf(endTag, contentStart)
         if (endIndex == -1) {
-            sections.add(MarkdownSection.Composable(markdown.substring(contentStart)))
+            sections.add(MarkdownSection.Composable(markdown.substring(contentStart), attrs))
             break
         } else {
             val compContent = markdown.substring(contentStart, endIndex)
-            sections.add(MarkdownSection.Composable(compContent))
+            sections.add(MarkdownSection.Composable(compContent, attrs))
             cursor = endIndex + endTag.length
         }
     }
     return sections.filter { it.content.isNotBlank() }
+}
+
+private fun parseAttributes(raw: String): Map<String, String?> {
+    val text = raw.trim()
+    if (text.isEmpty()) return emptyMap()
+    val attrs = linkedMapOf<String, String?>()
+    var i = 0
+    fun skipWs() { while (i < text.length && text[i].isWhitespace()) i++ }
+    fun readIdent(): String {
+        val start = i
+        if (i >= text.length) return ""
+        if (!text[i].isLetter() && text[i] != '_' ) return ""
+        i++
+        while (i < text.length) {
+            val c = text[i]
+            if (c.isLetterOrDigit() || c == '_' || c == '-') i++ else break
+        }
+        return text.substring(start, i)
+    }
+    fun readValue(): String {
+        if (i >= text.length) return ""
+        return when (text[i]) {
+            '"' -> {
+                i++
+                val start = i
+                while (i < text.length && text[i] != '"') i++
+                val v = text.substring(start, i)
+                if (i < text.length && text[i] == '"') i++
+                v
+            }
+            '\'' -> {
+                i++
+                val start = i
+                while (i < text.length && text[i] != '\'') i++
+                val v = text.substring(start, i)
+                if (i < text.length && text[i] == '\'') i++
+                v
+            }
+            else -> {
+                val start = i
+                while (i < text.length && !text[i].isWhitespace() && text[i] != '>') i++
+                text.substring(start, i)
+            }
+        }
+    }
+
+    while (i < text.length) {
+        skipWs()
+        val key = readIdent()
+        if (key.isEmpty()) break
+        skipWs()
+        var value = if (i < text.length && text[i] == '=') {
+            i++
+            skipWs()
+            readValue()
+        } else {
+            "true"
+        }
+        // Normalize escaped quotes like \"value\" or \'value\'
+        if (value.length >= 4 && value.startsWith("\\\"") && value.endsWith("\\\"")) {
+            value = value.substring(2, value.length - 2)
+        } else if (value.length >= 4 && value.startsWith("\\'") && value.endsWith("\\'")) {
+            value = value.substring(2, value.length - 2)
+        }
+        attrs[key] = value
+    }
+    return attrs
 }

@@ -26,8 +26,8 @@ val HeaderConfigPlugin = createComposeMarkPlugin { buildConfig ->
 
     onMarkdownBlockPreProcess {
         val headerSection =
-            it.content.lineSequence().takeWhile { it != "---" }.joinToString("\n")
-        if (headerSection.trim().isBlank() || headerSection == it.content) {
+            it.content.source.lineSequence().takeWhile { it != "---" }.joinToString("\n")
+        if (headerSection.trim().isBlank() || headerSection == it.content.source) {
             proceed()
             return@onMarkdownBlockPreProcess
         }
@@ -39,9 +39,9 @@ val HeaderConfigPlugin = createComposeMarkPlugin { buildConfig ->
             it.metadata[ThemeKey] = config["theme"]!!
         }
 
-        val md = it.content.lineSequence().dropWhile { it != "---" }.drop(1)
+        val md = it.content.source.lineSequence().dropWhile { it != "---" }.drop(1)
             .joinToString("\n")
-        proceedWith(it.copy(content = md, metadata = it.metadata))
+        proceedWith(it.copy(content = it.content.copy(source = md), metadata = it.metadata))
     }
 
     onRenderMarkdownBlock {

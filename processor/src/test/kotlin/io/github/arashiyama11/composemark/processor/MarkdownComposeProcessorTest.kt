@@ -108,6 +108,7 @@ import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromPa
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromSource
 import io.github.arashiyama11.composemark.core.ComposeMark
 import io.github.arashiyama11.composemark.core.MarkdownRenderer
+import io.github.arashiyama11.composemark.core.RenderContext
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
@@ -117,14 +118,13 @@ import androidx.compose.ui.Modifier
         
 class Renderer: MarkdownRenderer {
     @Composable
-    override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {
-        Text(source)
+    override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {
+        Text(context.source)
     }
     @Composable
     override fun RenderComposableBlock(
+        context: RenderContext,
         modifier: Modifier,
-        path: String?,
-        source: String,
         content: @Composable () -> Unit
     ) {
         content()

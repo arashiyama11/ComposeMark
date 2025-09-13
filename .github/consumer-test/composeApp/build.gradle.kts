@@ -76,6 +76,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
 
             implementation(libs.composemark.core)
+            implementation(libs.composemark.plugin)
             implementation(libs.multiplatform.markdown.renderer)
             implementation(libs.multiplatform.markdown.renderer.coil3)
             implementation(libs.multiplatform.markdown.renderer.code)

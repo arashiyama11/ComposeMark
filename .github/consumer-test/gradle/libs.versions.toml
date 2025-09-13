@@ -15,7 +15,7 @@ junit = "4.13.2"
 kotlin = "2.2.0"
 kotlinx-coroutines = "1.10.2"
 ksp = "2.2.0-2.0.2"
-compose-mark = "0.0.17-SNAPSHOT"
+compose-mark = "0.0.21-SNAPSHOT"
 multiplatform-markdown-renderer = "0.35.0"
 
 
@@ -33,6 +33,7 @@ androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 composemark-core = { module = "io.github.arashiyama11:composemark-core", version.ref = "compose-mark" }
 composemark-processor = { module = "io.github.arashiyama11:composemark-processor", version.ref = "compose-mark" }
+composemark-plugin = { module = "io.github.arashiyama11:composemark-plugin", version.ref = "compose-mark" }
 multiplatform-markdown-renderer = { module = "com.mikepenz:multiplatform-markdown-renderer", version.ref = "multiplatform-markdown-renderer" }
 multiplatform-markdown-renderer-coil3 = { module = "com.mikepenz:multiplatform-markdown-renderer-coil3", version.ref = "multiplatform-markdown-renderer" }
 multiplatform-markdown-renderer-code = { module = "com.mikepenz:multiplatform-markdown-renderer-code", version.ref = "multiplatform-markdown-renderer" }

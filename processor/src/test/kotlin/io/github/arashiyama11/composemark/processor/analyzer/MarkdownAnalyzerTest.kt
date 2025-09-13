@@ -75,15 +75,15 @@ class MarkdownAnalyzerTest {
             import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromSource
             import io.github.arashiyama11.composemark.core.MarkdownRenderer
             import io.github.arashiyama11.composemark.core.ComposeMark
+            import io.github.arashiyama11.composemark.core.RenderContext
             import androidx.compose.runtime.Composable
             import androidx.compose.ui.Modifier
             
             class Renderer: MarkdownRenderer {
-                @Composable override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {}
+                @Composable override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {}
                 @Composable override fun RenderComposableBlock(
+                    context: RenderContext,
                     modifier: Modifier,
-                    path: String?,
-                    source: String,
                     content: @Composable () -> Unit
                 ) {
                     content()
