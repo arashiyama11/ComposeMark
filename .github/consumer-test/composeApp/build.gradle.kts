@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -96,6 +95,7 @@ kotlin {
 composeMark {
     rootPath = "${rootProject.projectDir.absolutePath}/mdcx"
     watch("*") // relative to rootPath
+    ensureCommonKspBeforeKotlinCompile()
 }
 
 android {
@@ -140,11 +140,4 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
-}
-
-plugins.withId("com.google.devtools.ksp") {
-    tasks.withType<KotlinCompilationTask<*>>()
-        .configureEach {
-            dependsOn("kspCommonMainKotlinMetadata")
-        }
 }

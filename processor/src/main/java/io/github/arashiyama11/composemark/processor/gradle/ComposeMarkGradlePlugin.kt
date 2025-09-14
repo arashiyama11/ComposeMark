@@ -4,6 +4,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.tasks.PathSensitivity
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 open class ComposeMarkExtension internal constructor(project: Project) {
     /** Base directory for resolving Markdown and for composemark.root.path (defaults to projectDir). */
@@ -15,6 +16,15 @@ open class ComposeMarkExtension internal constructor(project: Project) {
     /** Convenience to append patterns. */
     fun watch(vararg patterns: String) {
         watch += patterns
+    }
+
+    fun Project.ensureCommonKspBeforeKotlinCompile() {
+        plugins.withId("com.google.devtools.ksp") {
+            tasks.withType(KotlinCompilationTask::class.java)
+                .configureEach {
+                    it.dependsOn("kspCommonMainKotlinMetadata")
+                }
+        }
     }
 }
 
@@ -48,7 +58,10 @@ class ComposeMarkGradlePlugin : Plugin<Project> {
                             kspExt::class.java.methods.firstOrNull { it.name == "arg" && it.parameterCount == 2 }
                         arg?.invoke(kspExt, "composemark.root.path", root)
                     } catch (e: Throwable) {
-                        project.logger.warn("Failed to set 'composemark.root.path' argument for KSP extension", e)
+                        project.logger.warn(
+                            "Failed to set 'composemark.root.path' argument for KSP extension",
+                            e
+                        )
                     }
                 }
 
