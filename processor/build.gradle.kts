@@ -57,42 +57,46 @@ dependencies {
     testImplementation(libs.mockk)
 }
 
-mavenPublishing {
-    configureBasedOnAppliedPlugins(sourcesJar = true, javadocJar = true)
+if (providers.environmentVariable("PUBLIC_RELEASE").getOrElse("false").toBoolean()) {
 
-    publishToMavenCentral(automaticRelease = true)
 
-    signAllPublications()
+    mavenPublishing {
+        configureBasedOnAppliedPlugins(sourcesJar = true, javadocJar = true)
 
-    coordinates(
-        group.toString(),
-        "composemark-gradle-plugin",
-        project.version.toString()
-    )
+        publishToMavenCentral(automaticRelease = true)
 
-    pom {
-        name.set("ComposeMark Gradle Plugin")
-        description.set("ComposeMark: generate Compose UI from Markdown & wire KSP inputs")
-        url.set("https://github.com/arashiyama11/ComposeMark")
-        inceptionYear.set("2025")
-        licenses {
-            license {
-                name.set("The Apache License, Version 2.0")
-                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                distribution.set("repo")
-            }
-        }
-        developers {
-            developer {
-                id.set("arashiyama11")
-                name.set("arashiyama")
-                url.set("https://github.com/arashiyama11")
-            }
-        }
-        scm {
+        signAllPublications()
+
+        coordinates(
+            group.toString(),
+            "composemark-gradle-plugin",
+            project.version.toString()
+        )
+
+        pom {
+            name.set("ComposeMark Gradle Plugin")
+            description.set("ComposeMark: generate Compose UI from Markdown & wire KSP inputs")
             url.set("https://github.com/arashiyama11/ComposeMark")
-            connection.set("scm:git:git://github.com/arashiyama11/ComposeMark")
-            developerConnection.set("scm:git:ssh://git@github.com/arashiyama11/ComposeMark")
+            inceptionYear.set("2025")
+            licenses {
+                license {
+                    name.set("The Apache License, Version 2.0")
+                    url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                    distribution.set("repo")
+                }
+            }
+            developers {
+                developer {
+                    id.set("arashiyama11")
+                    name.set("arashiyama")
+                    url.set("https://github.com/arashiyama11")
+                }
+            }
+            scm {
+                url.set("https://github.com/arashiyama11/ComposeMark")
+                connection.set("scm:git:git://github.com/arashiyama11/ComposeMark")
+                developerConnection.set("scm:git:ssh://git@github.com/arashiyama11/ComposeMark")
+            }
         }
     }
 }
