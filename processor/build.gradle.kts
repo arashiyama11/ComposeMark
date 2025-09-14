@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
 plugins {
     id("java-library")
     id("java-gradle-plugin")
@@ -63,7 +65,7 @@ if (providers.environmentVariable("PUBLIC_RELEASE").getOrElse("false").toBoolean
     mavenPublishing {
         configureBasedOnAppliedPlugins(sourcesJar = true, javadocJar = true)
 
-        publishToMavenCentral(automaticRelease = true)
+        publishToMavenCentral(host = SonatypeHost.S01, automaticRelease = true)
 
         signAllPublications()
 

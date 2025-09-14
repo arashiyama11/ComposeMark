@@ -21,7 +21,7 @@ espressoCore = "3.7.0"
 appcompat = "1.7.1"
 material = "1.13.0"
 mockk = "1.14.5"
-composeMark = "0.0.0"
+composeMark = "0.0.0-alpha01"
 
 [libraries]
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoServiceAnnotations" }
