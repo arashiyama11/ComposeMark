@@ -20,7 +20,7 @@ rootProject.name = "compose-mark"
 include(":core")
 include(":processor")
 include(":plugin")
-if (providers.environmentVariable("IncludeSample").getOrElse("true").toBoolean()) {
+if (providers.environmentVariable("INCLUDE_SAMPLE").getOrElse("true").toBoolean()) {
     include(":sample")
 }
 
