@@ -36,6 +36,7 @@ jobs:
       WORKDIR: .github/consumer-test
       GENERATED_FILE: .github/consumer-test/composeApp/build/generated/ksp/metadata/commonMain/kotlin/org/example/consumer/test/ContentsImpl.kt
       GRADLE_OPTS: -Dorg.gradle.daemon=false
+      INCLUDE_SAMPLE: false
 
     steps:
       - name: Checkout
