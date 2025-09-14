@@ -54,7 +54,7 @@ class MyComposeMark() : ComposeMark(MarkdownRendererImpl()) {
 interface Contents {
     @Composable
     @GenerateMarkdownFromPath("README.md")
-    fun README(modifier: Modifier = Modifier)
+    fun README(modifier: Modifier)
 
     companion object : Contents by ContentsImpl
 }
@@ -75,4 +75,3 @@ fun GreetingPreview() {
         Greeting("Android")
     }
 }
-

@@ -35,7 +35,8 @@ jobs:
     env:
       WORKDIR: .github/consumer-test
       GENERATED_FILE: .github/consumer-test/composeApp/build/generated/ksp/metadata/commonMain/kotlin/org/example/consumer/test/ContentsImpl.kt
-      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dkotlin.incremental=false
+      GRADLE_OPTS: -Dorg.gradle.daemon=false
+      INCLUDE_SAMPLE: false
 
     steps:
       - name: Checkout
@@ -47,7 +48,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Publish to Maven Local (root)
-        run: ./gradlew --stacktrace publishToMavenLocal
+        run: ./gradlew :core:publishToMavenLocal :processor:publishToMavenLocal :plugin:publishToMavenLocal
 
       - name: Set up Android SDK (Android only)
         if: matrix.task == 'assembleDebug'
@@ -55,10 +56,6 @@ jobs:
 
       - name: Grant Gradle wrapper execute permission (consumer-test)
         run: chmod +x gradlew
-        working-directory: ${{ env.WORKDIR }}
-
-      - name: Run kspCommonMainKotlinMetadata
-        run: ./gradlew --stacktrace kspCommonMainKotlinMetadata
         working-directory: ${{ env.WORKDIR }}
 
       - name: Run ${{ matrix.task }}

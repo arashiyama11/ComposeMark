@@ -19,9 +19,7 @@ jobs:
             os: macos-latest
           - target: jvmTest
             os: ubuntu-latest
-          - target: testDebugUnitTest
-            os: ubuntu-latest
-          - target: testReleaseUnitTest
+          - target: testAndroidHostTest
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
@@ -30,6 +28,8 @@ jobs:
       - uses: ./.github/actions/setup-java
 
       - name: run tests
+        env:
+          INCLUDE_SAMPLE: false
         run: |
           chmod +x gradlew
           ./gradlew ${{ matrix.target }}
@@ -43,7 +43,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Run assembleDebug
-        run: ./gradlew :sample:assembleDebug
+        env:
+          INCLUDE_SAMPLE: true
+        run: |
+          ./gradlew :processor:publishToMavenLocal :core:publishToMavenLocal :plugin:publishToMavenLocal
+          ./gradlew :sample:assembleDebug
       - name: Verify generated file exists
         run: ls sample/build/generated/ksp/debug/kotlin/io/github/arashiyama11/composemark/sample/ContentsImpl.kt
 

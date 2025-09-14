@@ -1,5 +1,6 @@
 pluginManagement {
     repositories {
+        mavenLocal()
         google()
         mavenCentral()
         gradlePluginPortal()
@@ -18,5 +19,8 @@ rootProject.name = "compose-mark"
 
 include(":core")
 include(":processor")
-include(":sample")
 include(":plugin")
+if (providers.environmentVariable("INCLUDE_SAMPLE").getOrElse("true").toBoolean()) {
+    include(":sample")
+}
+

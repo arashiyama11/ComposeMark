@@ -1,18 +1,19 @@
 plugins {
-    id("com.android.application")// version "8.12.0"
+    id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose") version "2.2.0"
+    id("io.github.arashiyama11.composemark") version libs.versions.composeMark.get()
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "io.github.arashiyama11.composemark.sample"
-    compileSdk = 36
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "io.github.arashiyama11.composemark.sample"
-        minSdk = 26
-        targetSdk = 36
+        minSdk = libs.versions.android.minSdk.get().toInt()
+        targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
 
@@ -51,32 +52,33 @@ android {
     }
 }
 
-configurations.matching { it.name.endsWith("ProcessorClasspath") }.configureEach {
-    // Set Skiko variant attribute 'ui' to "awt"
-    attributes.attribute(Attribute.of("ui", String::class.java), "awt")
+composeMark {
+    rootPath = rootProject.projectDir.absolutePath
+    watch("README.md")
 }
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":plugin"))
+    implementation(project(":core"))
+    ksp(project(":processor"))
+
+
     implementation(libs.core.ktx)
-    implementation("androidx.activity:activity-compose:1.10.1")
-    val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
+    implementation("androidx.activity:activity-compose:1.11.0")
+    val composeBom = platform("androidx.compose:compose-bom:2025.09.00")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
     // AndroidX Compose
-
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    implementation("org.jetbrains.skiko:skiko-awt:0.9.24")
+
     implementation("com.mikepenz:multiplatform-markdown-renderer:0.35.0")
     implementation("com.mikepenz:multiplatform-markdown-renderer-android:0.35.0")
 
-    implementation(project(":plugin"))
-    implementation(project(":core"))
-    ksp(project(":processor"))
 
     // Test
     testImplementation("junit:junit:4.13.2")
@@ -85,15 +87,4 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
-}
-
-allprojects {
-    afterEvaluate {
-        configurations.configureEach {
-            // If 'ui' attribute is missing, set it to 'awt'
-            if (attributes.getAttribute(Attribute.of("ui", String::class.java)) == null) {
-                attributes.attribute(Attribute.of("ui", String::class.java), "awt")
-            }
-        }
-    }
 }

@@ -12,4 +12,4 @@ plugins {
 }
 
 rootProject.group = "io.github.arashiyama11"
-rootProject.version = "0.0.21-SNAPSHOT"
+rootProject.version = libs.versions.composeMark.get()
