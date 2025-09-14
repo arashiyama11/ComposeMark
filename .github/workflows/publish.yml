@@ -8,23 +8,49 @@ on:
 jobs:
   publish:
     name: Release build and publish
-    runs-on: macOS-latest
+    runs-on: macos-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v5
+
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: 21
+
+      - name: Decode signing key (from base64 secret) and expose as Gradle env
+        run: |
+          set -euo pipefail
+
+          echo "$SIGNING_KEY_B64" | base64 --decode > signingKey.asc
+          if [ ! -s signingKey.asc ]; then
+            echo "Decoded signingKey.asc is empty - aborting"
+            exit 1
+          fi
+
+          echo "ORG_GRADLE_PROJECT_signingInMemoryKey<<'PGP_EOF'" >> $GITHUB_ENV
+          cat signingKey.asc >> $GITHUB_ENV
+          echo "PGP_EOF" >> $GITHUB_ENV
+
+          if [ -n "${SIGNING_PASSWORD:-}" ]; then
+            echo "ORG_GRADLE_PROJECT_signingInMemoryKeyPassword=${SIGNING_PASSWORD}" >> $GITHUB_ENV
+          fi
+
+          if [ -n "${SIGNING_KEY_ID:-}" ]; then
+            echo "ORG_GRADLE_PROJECT_signingInMemoryKeyId=${SIGNING_KEY_ID}" >> $GITHUB_ENV
+          fi
+        env:
+          SIGNING_KEY_B64: ${{ secrets.SIGNING_KEY_B64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD || '' }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID || '' }}
+
       - name: Publish to MavenCentral
-        run: ./gradlew :processor:publishToMavenCentral --no-configuration-cache --stacktrace
+        run: ./gradlew :processor:publishToMavenCentral --no-configuration-cache --stacktrace --warning-mode all
         env:
           INCLUDE_SAMPLE: false
           PUBLIC_RELEASE: true
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
-
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ env.ORG_GRADLE_PROJECT_signingInMemoryKeyPassword || '' }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ env.ORG_GRADLE_PROJECT_signingInMemoryKeyId || '' }}
