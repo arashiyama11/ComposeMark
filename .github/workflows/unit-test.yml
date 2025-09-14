@@ -46,8 +46,10 @@ jobs:
         run: chmod +x gradlew
       - name: Run assembleDebug
         env:
-          INCLUDE_SAMPLE: false
-        run: ./gradlew :sample:assembleDebug
+          INCLUDE_SAMPLE: true
+        run: |
+          ./gradlew :processor:publishToMavenLocal
+          ./gradlew :sample:assembleDebug
       - name: Verify generated file exists
         run: ls sample/build/generated/ksp/debug/kotlin/io/github/arashiyama11/composemark/sample/ContentsImpl.kt
 
