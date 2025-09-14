@@ -36,11 +36,12 @@ kotlin {
 
 dependencies {
     implementation(gradleApi())
+    compileOnly(libs.kotlin.gradle.plugin)
+
     implementation(libs.symbol.processing.api)
     implementation(project(":core")) {
         isTransitive = false
     }
-
 
     implementation(libs.kotlinpoet)
     implementation(libs.kotlinpoet.ksp)

@@ -35,6 +35,7 @@ dependencies {
 composeMark {
     rootPath = project.projectDir.path
     watch("docs/**/*.md", "docs/**/*.mdx") // relative to rootPath; optional
+    ensureCommonKspBeforeKotlinCompile() // Ensure common metadata is generated before compile tasks
 }
 ```
 
@@ -53,15 +54,6 @@ kotlin {
     sourceSets.named("commonMain") {
         // Add KSP output to commonMain explicitly (KGP 2.x does not auto-register it)
         kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
-    }
-}
-
-// Ensure common metadata is generated before compile tasks
-plugins.withId("org.jetbrains.kotlin.multiplatform") {
-    tasks.named {
-        it.startsWith("compileKotlin")
-    }.forEach {
-        it.dependsOn("kspCommonMainKotlinMetadata")
     }
 }
 ```
