@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -141,11 +142,9 @@ compose.desktop {
     }
 }
 
-
-plugins.withId("org.jetbrains.kotlin.multiplatform") {
-    tasks.named {
-        it.startsWith("compileKotlin")
-    }.forEach {
-        it.dependsOn("kspCommonMainKotlinMetadata")
-    }
+plugins.withId("com.google.devtools.ksp") {
+    tasks.withType<KotlinCompilationTask<*>>()
+        .configureEach {
+            dependsOn("kspCommonMainKotlinMetadata")
+        }
 }
