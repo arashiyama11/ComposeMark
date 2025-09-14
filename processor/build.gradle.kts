@@ -6,8 +6,6 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.jvm)
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.ksp)
-    `maven-publish`
-    signing
 }
 
 group = rootProject.group
@@ -61,11 +59,10 @@ dependencies {
 
 if (providers.environmentVariable("PUBLIC_RELEASE").getOrElse("false").toBoolean()) {
 
-
     mavenPublishing {
         configureBasedOnAppliedPlugins(sourcesJar = true, javadocJar = true)
 
-        publishToMavenCentral(host = SonatypeHost.S01, automaticRelease = true)
+        publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
 
         signAllPublications()
 
@@ -113,5 +110,12 @@ publishing {
     }
     repositories {
         mavenLocal()
+    }
+}
+
+afterEvaluate {
+    val allSignTasks = tasks.withType(Sign::class.java)
+    tasks.withType(PublishToMavenRepository::class.java).configureEach {
+        dependsOn(allSignTasks)
     }
 }
