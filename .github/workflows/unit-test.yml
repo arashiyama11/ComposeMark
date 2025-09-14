@@ -48,7 +48,7 @@ jobs:
         env:
           INCLUDE_SAMPLE: true
         run: |
-          ./gradlew :processor:publishToMavenLocal
+          ./gradlew :processor:publishToMavenLocal :core:publishToMavenLocal :plugin:publishToMavenLocal
           ./gradlew :sample:assembleDebug
       - name: Verify generated file exists
         run: ls sample/build/generated/ksp/debug/kotlin/io/github/arashiyama11/composemark/sample/ContentsImpl.kt
