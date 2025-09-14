@@ -51,7 +51,7 @@ public class PageScaffoldConfig {
     public var scrollWithToc: Boolean = false
     public var tocPosition: TocPosition = TocPosition.Left
 
-    public fun enableScroll(state: ScrollState, withToc: Boolean = false) {
+    public fun enableScroll(state: ScrollState = ScrollState(0), withToc: Boolean = false) {
         scrollState = state
         scrollWithToc = withToc
     }
@@ -114,9 +114,6 @@ public val PageScaffoldAppliedKey: PreProcessorMetadataKey<PageScaffoldApplied> 
 
 public val LocalAnchorModifier: ProvidableCompositionLocal<@Composable ((String) -> Modifier)> =
     staticCompositionLocalOf { error("No LocalAnchorModifier provided") }
-
-public val LocalBlockHeightModifier: ProvidableCompositionLocal<@Composable ((Int) -> Modifier)> =
-    staticCompositionLocalOf { error("No LocalBlockHeightModifier provided") }
 
 internal fun parseHeadingsFromMarkdownSource(source: String): List<HeadingInfo> {
     // Very small, dependency-free heading parser for ATX style (# .. ######)
@@ -245,11 +242,8 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                     }
                 }
 
-                // Provide Anchor modifier and a no-op BlockHeight modifier for samples
-                val heightMod: @Composable (Int) -> Modifier = { _ -> Modifier }
                 CompositionLocalProvider(
                     LocalAnchorModifier provides anchorMod,
-                    LocalBlockHeightModifier provides heightMod,
                 ) {
                     if (custom != null) {
                         val props = PageScaffoldProps(
