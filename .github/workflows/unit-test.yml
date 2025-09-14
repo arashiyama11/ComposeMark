@@ -30,6 +30,8 @@ jobs:
       - uses: ./.github/actions/setup-java
 
       - name: run tests
+        env:
+          INCLUDE_SAMPLE: false
         run: |
           chmod +x gradlew
           ./gradlew ${{ matrix.target }}
