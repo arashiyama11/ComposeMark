@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.jvm)
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.ksp)
+    `maven-publish`
+    signing
 }
 
 group = rootProject.group
@@ -55,6 +57,46 @@ dependencies {
     testImplementation(libs.mockk)
 }
 
+mavenPublishing {
+    configureBasedOnAppliedPlugins(sourcesJar = true, javadocJar = true)
+
+    publishToMavenCentral(automaticRelease = true)
+
+    signAllPublications()
+
+    coordinates(
+        group.toString(),
+        "composemark-gradle-plugin",
+        project.version.toString()
+    )
+
+    pom {
+        name.set("ComposeMark Gradle Plugin")
+        description.set("ComposeMark: generate Compose UI from Markdown & wire KSP inputs")
+        url.set("https://github.com/arashiyama11/ComposeMark")
+        inceptionYear.set("2025")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("repo")
+            }
+        }
+        developers {
+            developer {
+                id.set("arashiyama11")
+                name.set("arashiyama")
+                url.set("https://github.com/arashiyama11")
+            }
+        }
+        scm {
+            url.set("https://github.com/arashiyama11/ComposeMark")
+            connection.set("scm:git:git://github.com/arashiyama11/ComposeMark")
+            developerConnection.set("scm:git:ssh://git@github.com/arashiyama11/ComposeMark")
+        }
+    }
+}
+
 publishing {
     publications {
         // Standard library JAR
@@ -62,7 +104,6 @@ publishing {
             from(components["java"])
             artifactId = "composemark-processor"
         }
-        // Plugin marker JAR is provided automatically by java-gradle-plugin (MarkersPublication)
     }
     repositories {
         mavenLocal()
