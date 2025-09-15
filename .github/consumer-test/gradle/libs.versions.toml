@@ -16,7 +16,7 @@ kotlin = "2.2.20"
 kotlinx-coroutines = "1.10.2"
 ksp = "2.2.20-2.0.3"
 compose-mark = "+"
-multiplatform-markdown-renderer = "0.35.0"
+multiplatform-markdown-renderer = "0.37.0"
 
 
 [libraries]
