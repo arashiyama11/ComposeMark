@@ -76,8 +76,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
-    implementation("com.mikepenz:multiplatform-markdown-renderer:0.35.0")
-    implementation("com.mikepenz:multiplatform-markdown-renderer-android:0.35.0")
+    implementation("com.mikepenz:multiplatform-markdown-renderer:0.37.0")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-android:0.37.0")
 
 
     // Test

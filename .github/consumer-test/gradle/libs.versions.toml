@@ -10,13 +10,13 @@ androidx-espresso = "3.7.0"
 androidx-lifecycle = "2.9.3"
 androidx-testExt = "1.3.0"
 composeHotReload = "1.0.0-beta06"
-composeMultiplatform = "1.8.2"
+composeMultiplatform = "1.9.0-rc02"
 junit = "4.13.2"
 kotlin = "2.2.20"
 kotlinx-coroutines = "1.10.2"
 ksp = "2.2.20-2.0.3"
 compose-mark = "+"
-multiplatform-markdown-renderer = "0.35.0"
+multiplatform-markdown-renderer = "0.37.0"
 
 
 [libraries]

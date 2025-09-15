@@ -10,11 +10,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLinkStyles
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.elements.MarkdownText
+import com.mikepenz.markdown.model.DefaultMarkdownColors
+import com.mikepenz.markdown.model.DefaultMarkdownTypography
 import com.mikepenz.markdown.model.MarkdownColors
 import com.mikepenz.markdown.model.MarkdownTypography
 import io.github.arashiyama11.composemark.core.BlockEntry
@@ -154,17 +155,13 @@ fun rememberMarkdownColors(): MarkdownColors {
     val colorScheme = MaterialTheme.colorScheme
 
     val colors = remember {
-        object : MarkdownColors {
-            override val text: Color = colorScheme.onBackground
-            override val codeText: Color = colorScheme.onSurface
-            override val inlineCodeText: Color = colorScheme.onSurfaceVariant
-            override val linkText: Color = colorScheme.primary
-            override val codeBackground: Color = colorScheme.surfaceVariant
-            override val inlineCodeBackground: Color = colorScheme.surfaceVariant
-            override val dividerColor: Color = colorScheme.outline
-            override val tableText: Color = colorScheme.onSurface
-            override val tableBackground: Color = colorScheme.surface
-        }
+        DefaultMarkdownColors(
+            text = colorScheme.onBackground,
+            codeBackground = colorScheme.surfaceVariant,
+            inlineCodeBackground = colorScheme.surfaceVariant,
+            dividerColor = colorScheme.outline,
+            tableBackground = colorScheme.surface
+        )
     }
 
     return colors
@@ -175,29 +172,24 @@ fun rememberMarkdownTypography(): MarkdownTypography {
     val colorScheme = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     val markdownTypography = remember {
-        object : MarkdownTypography {
-            override val text: TextStyle = typography.bodyLarge
-            override val code: TextStyle =
-                typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
-            override val inlineCode: TextStyle =
-                typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
-            override val h1: TextStyle = typography.headlineLarge
-            override val h2: TextStyle = typography.headlineMedium
-            override val h3: TextStyle = typography.headlineSmall
-            override val h4: TextStyle = typography.titleLarge
-            override val h5: TextStyle = typography.titleMedium
-            override val h6: TextStyle = typography.titleSmall
-            override val quote: TextStyle =
-                typography.bodyLarge.copy(color = colorScheme.secondary)
-            override val paragraph: TextStyle = typography.bodyLarge
-            override val ordered: TextStyle = typography.bodyLarge
-            override val bullet: TextStyle = typography.bodyLarge
-            override val list: TextStyle = typography.bodyLarge
-            override val link: TextStyle =
-                typography.bodyLarge.copy(color = colorScheme.primary)
-            override val textLink: TextLinkStyles = TextLinkStyles()
-            override val table: TextStyle = typography.bodyMedium
-        }
+        DefaultMarkdownTypography(
+            h1 = typography.headlineLarge,
+            h2 = typography.headlineMedium,
+            h3 = typography.headlineSmall,
+            h4 = typography.titleLarge,
+            h5 = typography.titleMedium,
+            h6 = typography.titleSmall,
+            text = typography.bodyLarge,
+            code = typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+            inlineCode = typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+            quote = typography.bodyLarge.copy(color = colorScheme.secondary),
+            paragraph = typography.bodyLarge,
+            ordered = typography.bodyLarge,
+            bullet = typography.bodyLarge,
+            list = typography.bodyLarge,
+            textLink = TextLinkStyles(),
+            table = typography.bodyMedium
+        )
     }
 
     return markdownTypography
