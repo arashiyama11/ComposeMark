@@ -2,9 +2,6 @@ name: Publish
 on:
   release:
     types: [ released, prereleased ]
-  pull_request:
-    branches:
-      - main
 
 jobs:
   publish:
