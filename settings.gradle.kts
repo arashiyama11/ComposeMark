@@ -23,4 +23,3 @@ include(":plugin")
 if (providers.environmentVariable("INCLUDE_SAMPLE").getOrElse("true").toBoolean()) {
     include(":sample")
 }
-

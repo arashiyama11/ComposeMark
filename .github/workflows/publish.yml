@@ -19,7 +19,7 @@ jobs:
           distribution: 'zulu'
           java-version: 21
       - name: Publish to MavenCentral
-        run: ./gradlew :processor:publishToMavenCentral --no-configuration-cache --stacktrace --warning-mode all
+        run: ./gradlew :processor:publishToMavenCentral --no-configuration-cache
         env:
           INCLUDE_SAMPLE: false
           PUBLIC_RELEASE: true

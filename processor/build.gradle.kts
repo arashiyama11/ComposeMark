@@ -10,7 +10,7 @@ plugins {
 
 group = rootProject.group
 version = rootProject.version
-
+val isPublicRelease = providers.environmentVariable("PUBLIC_RELEASE").getOrElse("false").toBoolean()
 
 gradlePlugin {
     plugins {
@@ -57,65 +57,50 @@ dependencies {
     testImplementation(libs.mockk)
 }
 
-if (providers.environmentVariable("PUBLIC_RELEASE").getOrElse("false").toBoolean()) {
+mavenPublishing {
+    configureBasedOnAppliedPlugins(sourcesJar = true, javadocJar = true)
 
-    mavenPublishing {
-        configureBasedOnAppliedPlugins(sourcesJar = true, javadocJar = true)
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
 
-        publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
-
+    if (isPublicRelease) {
         signAllPublications()
+    }
 
-        coordinates(
-            group.toString(),
-            "composemark-gradle-plugin",
-            project.version.toString()
-        )
+    coordinates(
+        group.toString(),
+        "composemark-processor",
+        project.version.toString()
+    )
 
-        pom {
-            name.set("ComposeMark Gradle Plugin")
-            description.set("ComposeMark: generate Compose UI from Markdown & wire KSP inputs")
+    pom {
+        name.set("ComposeMark Processor")
+        description.set("ComposeMark: generate Compose UI from Markdown")
+        url.set("https://github.com/arashiyama11/ComposeMark")
+        inceptionYear.set("2025")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("repo")
+            }
+        }
+        developers {
+            developer {
+                id.set("arashiyama11")
+                name.set("arashiyama")
+                url.set("https://github.com/arashiyama11")
+            }
+        }
+        scm {
             url.set("https://github.com/arashiyama11/ComposeMark")
-            inceptionYear.set("2025")
-            licenses {
-                license {
-                    name.set("The Apache License, Version 2.0")
-                    url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                    distribution.set("repo")
-                }
-            }
-            developers {
-                developer {
-                    id.set("arashiyama11")
-                    name.set("arashiyama")
-                    url.set("https://github.com/arashiyama11")
-                }
-            }
-            scm {
-                url.set("https://github.com/arashiyama11/ComposeMark")
-                connection.set("scm:git:git://github.com/arashiyama11/ComposeMark")
-                developerConnection.set("scm:git:ssh://git@github.com/arashiyama11/ComposeMark")
-            }
+            connection.set("scm:git:git://github.com/arashiyama11/ComposeMark")
+            developerConnection.set("scm:git:ssh://git@github.com/arashiyama11/ComposeMark")
         }
     }
 }
 
-publishing {
-    publications {
-        // Standard library JAR
-        create<MavenPublication>("processor") {
-            from(components["java"])
-            artifactId = "composemark-processor"
-        }
-    }
-    repositories {
-        mavenLocal()
-    }
-}
-
-afterEvaluate {
-    val allSignTasks = tasks.withType(Sign::class.java)
-    tasks.withType(PublishToMavenRepository::class.java).configureEach {
-        dependsOn(allSignTasks)
+if (isPublicRelease) {
+    tasks.withType<PublishToMavenRepository>().configureEach {
+        dependsOn(tasks.withType(Sign::class.java))
     }
 }
