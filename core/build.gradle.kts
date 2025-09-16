@@ -1,6 +1,5 @@
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class, ExperimentalWasmDsl::class)
 
-import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
@@ -85,18 +84,14 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(libs.kotlin.stdlib)
-                implementation(compose.runtime)
-                implementation(compose.ui)
-                implementation(compose.foundation)
-                implementation(libs.kotlinx.coroutines.core)
+                api(compose.runtime)
+                api(compose.foundation)
             }
         }
 
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
-                implementation(libs.kotlinx.coroutines.test)
             }
         }
     }
@@ -105,7 +100,7 @@ kotlin {
 mavenPublishing {
     configureBasedOnAppliedPlugins(sourcesJar = true, javadocJar = true)
 
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
 
     if (isPublicRelease) {
         signAllPublications()
