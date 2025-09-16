@@ -1,6 +1,5 @@
 @file:OptIn(ExperimentalWasmDsl::class)
 
-import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
@@ -81,12 +80,11 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(libs.kotlin.stdlib)
-                implementation(compose.foundation)
-                implementation(compose.runtime)
-                implementation(compose.ui)
-                implementation(compose.material3)
-                implementation(project(":core"))
+                api(compose.foundation)
+                api(compose.runtime)
+                api(compose.ui)
+                api(compose.material3)
+                api(project(":core"))
             }
         }
 
@@ -103,7 +101,7 @@ kotlin {
 mavenPublishing {
     configureBasedOnAppliedPlugins(sourcesJar = true, javadocJar = true)
 
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
 
     if (isPublicRelease) {
         signAllPublications()
