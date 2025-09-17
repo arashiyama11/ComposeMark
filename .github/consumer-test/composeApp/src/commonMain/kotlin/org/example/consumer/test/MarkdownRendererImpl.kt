@@ -10,7 +10,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLinkStyles
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.markdownComponents
@@ -18,12 +17,15 @@ import com.mikepenz.markdown.compose.elements.MarkdownText
 import com.mikepenz.markdown.model.DefaultMarkdownColors
 import com.mikepenz.markdown.model.DefaultMarkdownTypography
 import com.mikepenz.markdown.model.MarkdownColors
-import com.mikepenz.markdown.model.MarkdownInlineContent
 import com.mikepenz.markdown.model.MarkdownTypography
+import com.mikepenz.markdown.model.markdownAnnotator
+import com.mikepenz.markdown.model.markdownInlineContent
 import io.github.arashiyama11.composemark.core.BlockEntry
 import io.github.arashiyama11.composemark.core.MarkdownRenderer
 import io.github.arashiyama11.composemark.core.RenderContext
-import io.github.arashiyama11.composemark.plugin.LocalAnchorModifier
+import io.github.arashiyama11.composemark.plugin.inline.annotateInlineEmbedContent
+import io.github.arashiyama11.composemark.plugin.inline.inlineEmbedContent
+import io.github.arashiyama11.composemark.plugin.scaffold.LocalAnchorModifier
 import org.intellij.markdown.MarkdownTokenTypes
 
 class MarkdownRendererImpl : MarkdownRenderer {
@@ -127,7 +129,16 @@ class MarkdownRendererImpl : MarkdownRenderer {
             modifier = modifier,
             colors = color,
             typography = typography,
-            components = mcs
+            components = mcs,
+            inlineContent = markdownInlineContent(inlineEmbedContent()),
+            annotator = markdownAnnotator { _, node ->
+                annotateInlineEmbedContent(
+                    context.source.substring(
+                        node.startOffset,
+                        node.endOffset
+                    )
+                )
+            }
         )
     }
 

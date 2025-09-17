@@ -1,5 +1,6 @@
 package io.github.arashiyama11.composemark.sample
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
@@ -18,18 +19,25 @@ import com.mikepenz.markdown.model.DefaultMarkdownColors
 import com.mikepenz.markdown.model.DefaultMarkdownTypography
 import com.mikepenz.markdown.model.MarkdownColors
 import com.mikepenz.markdown.model.MarkdownTypography
+import com.mikepenz.markdown.model.markdownAnnotator
+import com.mikepenz.markdown.model.markdownInlineContent
 import io.github.arashiyama11.composemark.core.BlockEntry
 import io.github.arashiyama11.composemark.core.MarkdownRenderer
 import io.github.arashiyama11.composemark.core.RenderContext
-import io.github.arashiyama11.composemark.plugin.LocalAnchorModifier
+import io.github.arashiyama11.composemark.plugin.inline.annotateInlineEmbedContent
+import io.github.arashiyama11.composemark.plugin.inline.inlineEmbedContent
+import io.github.arashiyama11.composemark.plugin.scaffold.LocalAnchorModifier
 import org.intellij.markdown.MarkdownTokenTypes
 
+
 class MarkdownRendererImpl : MarkdownRenderer {
+    @SuppressLint("UnusedBoxWithConstraintsScope")
     @Composable
     override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {
         val color = rememberMarkdownColors()
         val typography = rememberMarkdownTypography()
         val am = LocalAnchorModifier.current
+
         val mcs = markdownComponents(
             heading1 = {
                 val modifier = am(context.source.substring(it.node.startOffset, it.node.endOffset))
@@ -121,12 +129,23 @@ class MarkdownRendererImpl : MarkdownRenderer {
                 )
             },
         )
+
+
         Markdown(
             content = context.source,
             modifier = modifier,
             colors = color,
             typography = typography,
-            components = mcs
+            components = mcs,
+            inlineContent = markdownInlineContent(inlineEmbedContent()),
+            annotator = markdownAnnotator { _, node ->
+                annotateInlineEmbedContent(
+                    context.source.substring(
+                        node.startOffset,
+                        node.endOffset
+                    )
+                )
+            }
         )
     }
 

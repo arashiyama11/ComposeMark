@@ -44,8 +44,7 @@ public class PreProcessorMetadataKey<T>(public val name: String)
 
 public data class ComposablePipelineContent(
     val metadata: PreProcessorMetadata,
-    val source: String,
-    val fullSource: String,
+    val context: RenderContext,
     val content: @Composable (Modifier) -> Unit
 )
 
@@ -114,8 +113,7 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
             val renderSubject =
                 ComposablePipelineContent(
                     processed.metadata,
-                    context.source,
-                    context.fullSource
+                    context,
                 ) { mod ->
                     renderer.RenderMarkdownBlock(processed.content, mod)
                 }
@@ -146,8 +144,7 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
             val renderSubject =
                 ComposablePipelineContent(
                     processed.metadata,
-                    context.source,
-                    context.fullSource
+                    context,
                 ) { mod ->
                     renderer.RenderComposableBlock(context, mod) {
                         currentContent.value()
@@ -186,8 +183,13 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
         val result = remember(blocksProcessed.content) {
             val subject = ComposablePipelineContent(
                 metadata = blocksProcessed.metadata,
-                source = blocksProcessed.content.fullSource,
-                fullSource = blocksProcessed.content.fullSource,
+                context = RenderContext(
+                    source = blocksProcessed.content.fullSource,
+                    fullSource = blocksProcessed.content.fullSource,
+                    path = blocksProcessed.content.path,
+                    blockIndex = 0,
+                    totalBlocks = blocksProcessed.content.blocks.size,
+                ),
             ) { mod ->
                 val entries = blocksProcessed.content.blocks.mapIndexed { i, item ->
                     val meta = (item as? BlockItemMeta)
@@ -278,7 +280,10 @@ public object Block {
             context: RenderContext,
             modifier: Modifier
         ) {
-            composeMark.RenderComposableBlock(context.copy(path = path, attrs = attrs), modifier) { content() }
+            composeMark.RenderComposableBlock(
+                context.copy(path = path, attrs = attrs),
+                modifier
+            ) { content() }
         }
     }
 }

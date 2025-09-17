@@ -2,7 +2,21 @@ package io.github.arashiyama11.composemark.plugin
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import io.github.arashiyama11.composemark.core.*
+import io.github.arashiyama11.composemark.core.BlocksProcessorContext
+import io.github.arashiyama11.composemark.core.ComposablePipelineContent
+import io.github.arashiyama11.composemark.core.ComposeMark
+import io.github.arashiyama11.composemark.core.MarkdownRenderer
+import io.github.arashiyama11.composemark.core.PreProcessorMetadata
+import io.github.arashiyama11.composemark.core.PreProcessorPipelineContent
+import io.github.arashiyama11.composemark.core.RenderContext
+import io.github.arashiyama11.composemark.plugin.scaffold.BreadcrumbsKey
+import io.github.arashiyama11.composemark.plugin.scaffold.PageHeadingsKey
+import io.github.arashiyama11.composemark.plugin.scaffold.PagePathKey
+import io.github.arashiyama11.composemark.plugin.scaffold.PageScaffoldApplied
+import io.github.arashiyama11.composemark.plugin.scaffold.PageScaffoldAppliedKey
+import io.github.arashiyama11.composemark.plugin.scaffold.PageScaffoldPlugin
+import io.github.arashiyama11.composemark.plugin.scaffold.computeBreadcrumbsFromPath
+import io.github.arashiyama11.composemark.plugin.scaffold.parseHeadingsFromMarkdownSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -43,14 +57,17 @@ class PageScaffoldPluginTest {
 
     private class TestRenderer : MarkdownRenderer {
         @Composable
-        override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {}
+        override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {
+        }
 
         @Composable
         override fun RenderComposableBlock(
             context: RenderContext,
             modifier: Modifier,
             content: @Composable () -> Unit,
-        ) { content() }
+        ) {
+            content()
+        }
     }
 
     private class TestComposeMark : ComposeMark(TestRenderer()) {
@@ -64,7 +81,11 @@ class PageScaffoldPluginTest {
 
         val meta = PreProcessorMetadata()
         val input = PreProcessorPipelineContent(
-            content = BlocksProcessorContext(blocks = listOf(), fullSource = "", path = "/docs/guide/intro.md"),
+            content = BlocksProcessorContext(
+                blocks = listOf(),
+                fullSource = "",
+                path = "/docs/guide/intro.md"
+            ),
             metadata = meta,
         )
         val out = cm.blockListPreProcessorPipeline.execute(input)
@@ -80,8 +101,13 @@ class PageScaffoldPluginTest {
         val meta = PreProcessorMetadata().also { it[PagePathKey] = "/docs/guide/intro.md" }
         val subject = ComposablePipelineContent(
             metadata = meta,
-            source = "# Title\n## Sub A",
-            fullSource = "# Title\n## Sub A",
+            context = RenderContext(
+                source = "# Title\n## Sub A",
+                fullSource = "# Title\n## Sub A",
+                path = null,
+                blockIndex = 0,
+                totalBlocks = 1,
+            ),
         ) { }
 
         val result = cm.renderBlocksPipeline.execute(subject)
@@ -89,10 +115,10 @@ class PageScaffoldPluginTest {
         val bc = result.metadata[BreadcrumbsKey]
         val applied = result.metadata[PageScaffoldAppliedKey]
         assertNotNull(hs)
-        assertTrue(hs!!.size >= 2)
+        assertTrue(hs.size >= 2)
         assertEquals("title", hs[0].anchor)
         assertNotNull(bc)
-        assertEquals("intro", bc!!.last().label)
+        assertEquals("intro", bc.last().label)
         assertEquals(PageScaffoldApplied.Default, applied)
     }
 
@@ -119,10 +145,10 @@ class PageScaffoldPluginTest {
 
         val out = cm.markdownBlockPreProcessorPipeline.execute(input)
         val lines = out.content.source.lines()
-        kotlin.test.assertEquals("# Title {#title}", lines[0])
-        kotlin.test.assertEquals("## Sub {#sub}", lines[1])
-        kotlin.test.assertEquals("## Sub {#sub-2}", lines[2])
-        kotlin.test.assertEquals("### Another Title {#another-title}", lines[3])
+        assertEquals("# Title {#title}", lines[0])
+        assertEquals("## Sub {#sub}", lines[1])
+        assertEquals("## Sub {#sub-2}", lines[2])
+        assertEquals("### Another Title {#another-title}", lines[3])
     }
 
     @Test
@@ -138,8 +164,13 @@ class PageScaffoldPluginTest {
         val meta = PreProcessorMetadata().also { it[PagePathKey] = "/docs/guide/intro.md" }
         val subject = ComposablePipelineContent(
             metadata = meta,
-            source = "# Title\n## Sub A",
-            fullSource = "# Title\n## Sub A",
+            context = RenderContext(
+                source = "# Title\n## Sub A",
+                fullSource = "# Title\n## Sub A",
+                path = null,
+                blockIndex = 0,
+                totalBlocks = 1,
+            ),
         ) { }
 
         val result = cm.renderBlocksPipeline.execute(subject)

@@ -1,4 +1,4 @@
-package io.github.arashiyama11.composemark.plugin
+package io.github.arashiyama11.composemark.plugin.scaffold
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
@@ -190,7 +190,8 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
         onRenderBlocks {
 
             val headings =
-                it.metadata[PageHeadingsKey] ?: parseHeadingsFromMarkdownSource(it.fullSource)
+                it.metadata[PageHeadingsKey]
+                    ?: parseHeadingsFromMarkdownSource(it.context.fullSource)
 
             if (headings.isNotEmpty()) {
                 it.metadata[PageHeadingsKey] = headings
@@ -238,7 +239,6 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                             if (rect != null) rq.bringIntoView(rect) else rq.bringIntoView()
                         } catch (t: Throwable) {
                         }
-                    } else {
                     }
                 }
 
@@ -386,3 +386,26 @@ private fun DefaultHeadingItem(
     val clickable = onClick?.let { base.clickable(onClick = it) } ?: base
     Text(text = label, style = style, modifier = clickable)
 }
+
+
+internal fun slugify(text: String): String = buildString {
+    var prevHyphen = false
+    text.lowercase().forEach { ch ->
+        when {
+            ch.isLetterOrDigit() -> {
+                append(ch)
+                prevHyphen = false
+            }
+
+            ch.isWhitespace() || ch == '-' || ch == '_' -> {
+                if (!prevHyphen) append('-')
+                prevHyphen = true
+            }
+
+            else -> {
+                // skip punctuation
+            }
+        }
+    }
+}.trim('-')
+
