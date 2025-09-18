@@ -31,4 +31,20 @@ class PipelineControlTest {
         // third interceptor should not run
         assertEquals("S-1-2", result)
     }
+
+    @Test
+    fun `interceptors respect priority and order`() {
+        val pipeline = Pipeline<String>()
+
+        pipeline.intercept(priority = PipelinePriority.Low) { s -> proceedWith("$s-low") }
+        pipeline.intercept(priority = PipelinePriority.High) { s -> proceedWith("$s-high0") }
+        pipeline.intercept(priority = PipelinePriority.High, order = 1) { s -> proceedWith("$s-high1") }
+        pipeline.intercept(priority = PipelinePriority.Normal, order = 5) { s -> proceedWith("$s-normalA") }
+        pipeline.intercept(priority = PipelinePriority.Normal, order = 5) { s -> proceedWith("$s-normalB") }
+        pipeline.intercept(priority = PipelinePriority.Normal, order = -1) { s -> proceedWith("$s-normalC") }
+
+        val result = pipeline.execute("S")
+
+        assertEquals("S-high1-high0-normalA-normalB-normalC-low", result)
+    }
 }

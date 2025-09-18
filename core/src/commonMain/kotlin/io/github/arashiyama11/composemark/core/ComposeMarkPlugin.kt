@@ -9,28 +9,52 @@ public interface ComposeMarkPlugin<out TBuilder> {
 public class ComposeMarkPluginScope(
     private val composeMark: ComposeMark
 ) {
-    public fun onBlockListPreProcess(block: PipelineInterceptor<PreProcessorPipelineContent<BlocksProcessorContext>>) {
-        composeMark.blockListPreProcessorPipeline.intercept(block)
+    public fun onBlockListPreProcess(
+        priority: PipelinePriority = PipelinePriority.Normal,
+        order: Int = 0,
+        block: PipelineInterceptor<PreProcessorPipelineContent<BlocksProcessorContext>>,
+    ) {
+        composeMark.blockListPreProcessorPipeline.intercept(priority, order, block)
     }
 
-    public fun onComposableBlockPreProcess(block: PipelineInterceptor<PreProcessorPipelineContent<RenderContext>>) {
-        composeMark.composableBlockPreProcessorPipeline.intercept(block)
+    public fun onComposableBlockPreProcess(
+        priority: PipelinePriority = PipelinePriority.Normal,
+        order: Int = 0,
+        block: PipelineInterceptor<PreProcessorPipelineContent<RenderContext>>,
+    ) {
+        composeMark.composableBlockPreProcessorPipeline.intercept(priority, order, block)
     }
 
-    public fun onMarkdownBlockPreProcess(block: PipelineInterceptor<PreProcessorPipelineContent<RenderContext>>) {
-        composeMark.markdownBlockPreProcessorPipeline.intercept(block)
+    public fun onMarkdownBlockPreProcess(
+        priority: PipelinePriority = PipelinePriority.Normal,
+        order: Int = 0,
+        block: PipelineInterceptor<PreProcessorPipelineContent<RenderContext>>,
+    ) {
+        composeMark.markdownBlockPreProcessorPipeline.intercept(priority, order, block)
     }
 
-    public fun onRenderMarkdownBlock(block: PipelineInterceptor<ComposablePipelineContent>) {
-        composeMark.renderMarkdownBlockPipeline.intercept(block)
+    public fun onRenderMarkdownBlock(
+        priority: PipelinePriority = PipelinePriority.Normal,
+        order: Int = 0,
+        block: PipelineInterceptor<ComposablePipelineContent>,
+    ) {
+        composeMark.renderMarkdownBlockPipeline.intercept(priority, order, block)
     }
 
-    public fun onRenderComposableBlock(block: PipelineInterceptor<ComposablePipelineContent>) {
-        composeMark.renderComposableBlockPipeline.intercept(block)
+    public fun onRenderComposableBlock(
+        priority: PipelinePriority = PipelinePriority.Normal,
+        order: Int = 0,
+        block: PipelineInterceptor<ComposablePipelineContent>,
+    ) {
+        composeMark.renderComposableBlockPipeline.intercept(priority, order, block)
     }
 
-    public fun onRenderBlocks(block: PipelineInterceptor<ComposablePipelineContent>) {
-        composeMark.renderBlocksPipeline.intercept(block)
+    public fun onRenderBlocks(
+        priority: PipelinePriority = PipelinePriority.Normal,
+        order: Int = 0,
+        block: PipelineInterceptor<ComposablePipelineContent>,
+    ) {
+        composeMark.renderBlocksPipeline.intercept(priority, order, block)
     }
 }
 
