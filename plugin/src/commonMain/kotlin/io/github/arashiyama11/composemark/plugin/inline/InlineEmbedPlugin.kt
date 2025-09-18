@@ -9,9 +9,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
@@ -63,9 +65,9 @@ public val LocalInlineChildren: ProvidableCompositionLocal<SnapshotStateMap<Stri
     }
 
 public val InlineEmbedPlugin: ComposeMarkPlugin<InlineEmbedPluginConfig> =
-    composeMarkPlugin(::InlineEmbedPluginConfig) {
+    composeMarkPlugin(::InlineEmbedPluginConfig) { config ->
         onBlockListPreProcess { subject ->
-            val blocks = subject.content.blocks.toMutableList()
+            val blocks = subject.data.blocks.toMutableList()
             if (blocks.isEmpty()) {
                 proceed()
                 return@onBlockListPreProcess
@@ -77,10 +79,10 @@ public val InlineEmbedPlugin: ComposeMarkPlugin<InlineEmbedPluginConfig> =
             val queue = mutableListOf<InlineSlotConfig>()
 
             fun mergeMarkdownAt(index: Int, appendSource: String): BlockItem =
-                mergeMarkdownBlock(newBlocks[index], appendSource, subject.content.path)
+                mergeMarkdownBlock(newBlocks[index], appendSource, subject.data.path)
 
-            val sections = parseComposableSections(subject.content.fullSource)
-            val iter = subject.content.blocks.iterator()
+            val sections = parseComposableSections(subject.data.fullSource)
+            val iter = subject.data.blocks.iterator()
             var inlineCounter = 0
             var lastMarkdownIndexInNew = -1
 
@@ -102,7 +104,7 @@ public val InlineEmbedPlugin: ComposeMarkPlugin<InlineEmbedPluginConfig> =
 
                         var targetIndex = lastMarkdownIndexInNew
                         if (targetIndex == -1) {
-                            val empty = Block.markdown("", subject.content.path)
+                            val empty = Block.markdown("", subject.data.path)
                             newBlocks.add(0, empty)
                             targetIndex = 0
                             lastMarkdownIndexInNew = 0
@@ -113,7 +115,7 @@ public val InlineEmbedPlugin: ComposeMarkPlugin<InlineEmbedPluginConfig> =
                         val plan = InlineSlotConfig(
                             id = id,
                             attrs = sec.attrs,
-                            blockIndex = frontBlocks.size
+                            blockIndex = frontBlocks.size,
                         )
                         plans[id] = plan
                         queue += plan
@@ -140,8 +142,8 @@ public val InlineEmbedPlugin: ComposeMarkPlugin<InlineEmbedPluginConfig> =
             subject.metadata[InlinePlaceholdersKey] = plans
             subject.metadata[InlinePlaceholdersQueueKey] = queue
 
-            val updated = subject.content.copy(blocks = frontBlocks + newBlocks)
-            proceedWith(subject.copy(content = updated))
+            val updated = subject.data.copy(blocks = frontBlocks + newBlocks)
+            proceedWith(subject.copy(data = updated))
             return@onBlockListPreProcess
         }
 
@@ -164,8 +166,9 @@ public val InlineEmbedPlugin: ComposeMarkPlugin<InlineEmbedPluginConfig> =
             val result = subject.copy { modifier ->
                 val plans = LocalInlinePlans.current
                 val isInline =
-                    subject.context.attrs["inline"]?.equals("true", ignoreCase = true) == true
-                val plan = plans.values.firstOrNull { it.blockIndex == subject.context.blockIndex }
+                    subject.renderContext.attrs["inline"]?.equals("true", ignoreCase = true) == true
+                val plan =
+                    plans.values.firstOrNull { it.blockIndex == subject.renderContext.blockIndex }
 
                 if (isInline && plan != null) {
                     val reg = LocalInlineChildren.current
@@ -255,31 +258,50 @@ public fun buildInlineTextContent(
         InlineTextContent(
             placeholder = Placeholder(widthTu, (heightTu ?: (16.sp * 1.15f)), valign)
         ) {
-            val m = remember(widthTu) {
-                widthTu
-            }
+
             val density = LocalDensity.current
-            val wDp = with(density) { m.toPx().dp }
+            val wDp = with(density) { widthTu.toPx().dp }
             Box(Modifier.width(wDp)) { children() }
         }
     }
 }
 
-
 @Composable
-public fun inlineEmbedContent(): SnapshotStateMap<String, InlineTextContent> {
+public fun rememberInlineEmbedContent(): SnapshotStateMap<String, InlineTextContent> {
     val plans = LocalInlinePlans.current
     val reg = LocalInlineChildren.current
     val density = LocalDensity.current
-    if (plans.isEmpty()) return mutableStateMapOf()
-    val result = mutableStateMapOf<String, InlineTextContent>()
-    plans.values.forEach { plan ->
-        val child = reg[plan.id]
-        if (child != null) {
-            result[plan.id] = with(density) { buildInlineTextContent(plan) { child() } }
+
+    val stateMap = remember { mutableStateMapOf<String, InlineTextContent>() }
+
+    val latestReg = rememberUpdatedState(reg)
+
+    val target = remember(plans, density) {
+        with(density) {
+            buildMap {
+                for (plan in plans.values) {
+                    put(
+                        plan.id,
+                        buildInlineTextContent(plan) {
+                            latestReg.value[plan.id]?.invoke()
+                        }
+                    )
+                }
+            }
         }
     }
-    return result
+
+    SideEffect {
+        val toRemove = stateMap.keys - target.keys
+        toRemove.forEach {
+            stateMap.remove(it)
+        }
+        for ((k, v) in target) {
+            if (stateMap[k] !== v) stateMap[k] = v
+        }
+    }
+
+    return stateMap
 }
 
 public fun AnnotatedString.Builder.annotateInlineEmbedContent(content: String): Boolean {

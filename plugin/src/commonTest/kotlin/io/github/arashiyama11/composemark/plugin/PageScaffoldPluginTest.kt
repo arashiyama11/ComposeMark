@@ -81,7 +81,7 @@ class PageScaffoldPluginTest {
 
         val meta = PreProcessorMetadata()
         val input = PreProcessorPipelineContent(
-            content = BlocksProcessorContext(
+            data = BlocksProcessorContext(
                 blocks = listOf(),
                 fullSource = "",
                 path = "/docs/guide/intro.md"
@@ -101,7 +101,7 @@ class PageScaffoldPluginTest {
         val meta = PreProcessorMetadata().also { it[PagePathKey] = "/docs/guide/intro.md" }
         val subject = ComposablePipelineContent(
             metadata = meta,
-            context = RenderContext(
+            renderContext = RenderContext(
                 source = "# Title\n## Sub A",
                 fullSource = "# Title\n## Sub A",
                 path = null,
@@ -128,7 +128,7 @@ class PageScaffoldPluginTest {
         cm.install(PageScaffoldPlugin) { injectHeadingIds = true }
 
         val input = PreProcessorPipelineContent(
-            content = RenderContext(
+            data = RenderContext(
                 source = """
                 # Title
                 ## Sub
@@ -144,7 +144,7 @@ class PageScaffoldPluginTest {
         )
 
         val out = cm.markdownBlockPreProcessorPipeline.execute(input)
-        val lines = out.content.source.lines()
+        val lines = out.data.source.lines()
         assertEquals("# Title {#title}", lines[0])
         assertEquals("## Sub {#sub}", lines[1])
         assertEquals("## Sub {#sub-2}", lines[2])
@@ -156,7 +156,6 @@ class PageScaffoldPluginTest {
         val cm = TestComposeMark()
         cm.install(PageScaffoldPlugin) {
             scaffold = { props, m ->
-                // just invoke content; test checks metadata branch
                 props.content(m)
             }
         }
@@ -164,7 +163,7 @@ class PageScaffoldPluginTest {
         val meta = PreProcessorMetadata().also { it[PagePathKey] = "/docs/guide/intro.md" }
         val subject = ComposablePipelineContent(
             metadata = meta,
-            context = RenderContext(
+            renderContext = RenderContext(
                 source = "# Title\n## Sub A",
                 fullSource = "# Title\n## Sub A",
                 path = null,

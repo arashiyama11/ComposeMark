@@ -32,12 +32,12 @@ class SampleCodeConfig {
 
 val SampleCodePlugin = composeMarkPlugin(::SampleCodeConfig) { config ->
     onRenderComposableBlock {
-        if (it.context.source.lineSequence().firstOrNull()?.trim() != config.command) {
+        if (it.renderContext.source.lineSequence().firstOrNull()?.trim() != config.command) {
             proceed()
             return@onRenderComposableBlock
         }
-        val source = it.context.source.lineSequence().drop(1).joinToString("\n")
-        val result = it.copy(context = it.context.copy(source = source)) { modifier ->
+        val source = it.renderContext.source.lineSequence().drop(1).joinToString("\n")
+        val result = it.copy(renderContext = it.renderContext.copy(source = source)) { modifier ->
             when (config.orientation) {
                 SampleCodeConfig.Orientation.VERTICAL -> {
                     Column(modifier) {

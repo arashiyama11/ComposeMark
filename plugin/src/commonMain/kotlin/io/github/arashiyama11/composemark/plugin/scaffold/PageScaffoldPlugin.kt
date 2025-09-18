@@ -154,7 +154,7 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                     pattern = "^(#{1,6})\\s+(.+?)\\s*(\\{#([a-z0-9\\-]+)\\})?\\s*$",
                     option = RegexOption.IGNORE_CASE
                 )
-                val transformed = subject.content.source.lineSequence().map { line ->
+                val transformed = subject.data.source.lineSequence().map { line ->
                     val m = headingRegex.find(line)
                     if (m == null) return@map line
                     val hashes = m.groupValues[1]
@@ -170,20 +170,20 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                     "$hashes $text {#$unique}"
                 }.joinToString("\n")
 
-                proceedWith(subject.copy(content = subject.content.copy(source = transformed)))
+                proceedWith(subject.copy(data = subject.data.copy(source = transformed)))
             }
         }
 
         // Capture path into metadata so render phase can compute breadcrumbs.
         onBlockListPreProcess { subject ->
-            val headings = subject.content.blocks.flatMapIndexed { i, block ->
+            val headings = subject.data.blocks.flatMapIndexed { i, block ->
                 parseHeadingsFromMarkdownSource(block.source).map {
                     if (it.blockIndex == null) it.copy(blockIndex = i) else it
                 }
             }
 
             subject.metadata[PageHeadingsKey] = headings
-            subject.content.path?.let { p -> subject.metadata[PagePathKey] = p }
+            subject.data.path?.let { p -> subject.metadata[PagePathKey] = p }
             proceed()
         }
 
@@ -191,7 +191,7 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
 
             val headings =
                 it.metadata[PageHeadingsKey]
-                    ?: parseHeadingsFromMarkdownSource(it.context.fullSource)
+                    ?: parseHeadingsFromMarkdownSource(it.renderContext.fullSource)
 
             if (headings.isNotEmpty()) {
                 it.metadata[PageHeadingsKey] = headings

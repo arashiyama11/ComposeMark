@@ -37,11 +37,9 @@ internal fun parseComposableSections(
         val innerStart = close + 1
         val end = src.indexOf(endTag, innerStart)
         if (end == -1) {
-            // 不正ケース: 残りは Markdown として扱う
             list += CmSection(markdown = src.substring(innerStart))
             break
         }
-        // Composable セクションを 1 つ追加
         list += CmSection(markdown = null, attrs = attrs)
         cursor = end + endTag.length
     }

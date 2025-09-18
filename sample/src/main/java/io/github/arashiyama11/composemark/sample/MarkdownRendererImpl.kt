@@ -25,7 +25,7 @@ import io.github.arashiyama11.composemark.core.BlockEntry
 import io.github.arashiyama11.composemark.core.MarkdownRenderer
 import io.github.arashiyama11.composemark.core.RenderContext
 import io.github.arashiyama11.composemark.plugin.inline.annotateInlineEmbedContent
-import io.github.arashiyama11.composemark.plugin.inline.inlineEmbedContent
+import io.github.arashiyama11.composemark.plugin.inline.rememberInlineEmbedContent
 import io.github.arashiyama11.composemark.plugin.scaffold.LocalAnchorModifier
 import org.intellij.markdown.MarkdownTokenTypes
 
@@ -137,7 +137,7 @@ class MarkdownRendererImpl : MarkdownRenderer {
             colors = color,
             typography = typography,
             components = mcs,
-            inlineContent = markdownInlineContent(inlineEmbedContent()),
+            inlineContent = markdownInlineContent(rememberInlineEmbedContent()),
             annotator = markdownAnnotator { _, node ->
                 annotateInlineEmbedContent(
                     context.source.substring(
