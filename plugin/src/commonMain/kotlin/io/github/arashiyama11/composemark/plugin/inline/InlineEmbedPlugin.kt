@@ -33,7 +33,22 @@ import io.github.arashiyama11.composemark.core.ComposeMarkPlugin
 import io.github.arashiyama11.composemark.core.PreProcessorMetadataKey
 import io.github.arashiyama11.composemark.core.composeMarkPlugin
 
-public class InlineEmbedPluginConfig
+public object InlineEmbedDefaults {
+    public val defaultWidth: TextUnit = 16.sp
+    public val defaultHeight: TextUnit = 18.sp
+    public val defaultMetrics: InlineTextMetrics = InlineTextMetrics(defaultWidth, defaultHeight)
+}
+
+public class InlineEmbedPluginConfig {
+    public var defaultWidth: TextUnit = InlineEmbedDefaults.defaultWidth
+    public var defaultHeight: TextUnit = InlineEmbedDefaults.defaultHeight
+}
+
+@Immutable
+public data class InlineTextMetrics(
+    val width: TextUnit,
+    val height: TextUnit,
+)
 
 @Immutable
 public data class InlineSlotConfig(
@@ -63,6 +78,9 @@ public val LocalInlineChildren: ProvidableCompositionLocal<SnapshotStateMap<Stri
     compositionLocalOf<SnapshotStateMap<String, @Composable () -> Unit>> {
         error("No LocalInlineChildren provided")
     }
+
+public val LocalInlineDefaultTextMetrics: ProvidableCompositionLocal<InlineTextMetrics> =
+    staticCompositionLocalOf { InlineEmbedDefaults.defaultMetrics }
 
 public val InlineEmbedPlugin: ComposeMarkPlugin<InlineEmbedPluginConfig> =
     composeMarkPlugin(::InlineEmbedPluginConfig) { config ->
@@ -151,10 +169,14 @@ public val InlineEmbedPlugin: ComposeMarkPlugin<InlineEmbedPluginConfig> =
             val plans = subject.metadata[InlinePlaceholdersKey] ?: mutableStateMapOf()
             val wrapped = subject.copy { mod: Modifier ->
                 val registry = remember { mutableStateMapOf<String, @Composable () -> Unit>() }
+                val width = resolveWidth(config.defaultWidth)
+                val height = resolveHeight(config.defaultHeight)
+                val metrics = InlineTextMetrics(width, height)
 
                 CompositionLocalProvider(
                     LocalInlinePlans provides plans,
-                    LocalInlineChildren provides registry
+                    LocalInlineChildren provides registry,
+                    LocalInlineDefaultTextMetrics provides metrics,
                 ) {
                     subject.content(mod)
                 }
@@ -243,27 +265,35 @@ context(density: Density)
 public fun buildInlineTextContent(
     plan: InlineSlotConfig,
     children: @Composable () -> Unit,
+    defaultWidth: TextUnit = InlineEmbedDefaults.defaultWidth,
+    defaultHeight: TextUnit = InlineEmbedDefaults.defaultHeight,
 ): InlineTextContent {
     val widthAttr = plan.attrs["width"]
     val heightAttr = plan.attrs["height"]
     val valign = mapVerticalAlign(plan.attrs["valign"])
     val widthTu = resolveTextUnitOrNull(widthAttr)
     val heightTu = resolveTextUnitOrNull(heightAttr)
+    val effectiveWidth = resolveWidth(widthTu ?: defaultWidth)
+    val resolvedHeight = resolveHeight(heightTu ?: defaultHeight)
 
-    return if (widthTu == null) {
-        autoMeasuredInlineTextContent(
-            placeholderVerticalAlign = valign,
-        ) { children() }
-    } else {
-        InlineTextContent(
-            placeholder = Placeholder(widthTu, (heightTu ?: (16.sp * 1.15f)), valign)
-        ) {
+    return InlineTextContent(
+        placeholder = Placeholder(effectiveWidth, resolvedHeight, valign)
+    ) {
 
-            val density = LocalDensity.current
-            val wDp = with(density) { widthTu.toPx().dp }
-            Box(Modifier.width(wDp)) { children() }
-        }
+        val density = LocalDensity.current
+        val wDp = with(density) { effectiveWidth.toPx().dp }
+        Box(Modifier.width(wDp)) { children() }
     }
+}
+
+internal fun resolveWidth(width: TextUnit): TextUnit {
+    return width.takeIf { it != TextUnit.Unspecified } ?: InlineEmbedDefaults.defaultWidth
+}
+
+internal fun resolveHeight(
+    height: TextUnit,
+): TextUnit {
+    return height.takeIf { it != TextUnit.Unspecified } ?: InlineEmbedDefaults.defaultHeight
 }
 
 @Composable
@@ -271,20 +301,28 @@ public fun rememberInlineEmbedContent(): SnapshotStateMap<String, InlineTextCont
     val plans = LocalInlinePlans.current
     val reg = LocalInlineChildren.current
     val density = LocalDensity.current
+    val defaultMetrics = LocalInlineDefaultTextMetrics.current
+    val metricsWidth = defaultMetrics.width
+    val metricsHeight = defaultMetrics.height
 
     val stateMap = remember { mutableStateMapOf<String, InlineTextContent>() }
 
     val latestReg = rememberUpdatedState(reg)
 
-    val target = remember(plans, density) {
+    val target = remember(plans, density, metricsWidth, metricsHeight) {
         with(density) {
             buildMap {
                 for (plan in plans.values) {
                     put(
                         plan.id,
-                        buildInlineTextContent(plan) {
-                            latestReg.value[plan.id]?.invoke()
-                        }
+                        buildInlineTextContent(
+                            plan = plan,
+                            defaultWidth = metricsWidth,
+                            defaultHeight = metricsHeight,
+                            children = {
+                                latestReg.value[plan.id]?.invoke()
+                            },
+                        )
                     )
                 }
             }
