@@ -13,7 +13,7 @@ class PluginInterceptionTest {
 
         // markdownBlock pre-process is intercepted: content and path updated, metadata flagged
         val mdInitial = PreProcessorPipelineContent(
-            content = RenderContext(
+            data = RenderContext(
                 source = "Hello",
                 fullSource = "Hello",
                 path = "original.md",
@@ -23,13 +23,13 @@ class PluginInterceptionTest {
             metadata = PreProcessorMetadata(),
         )
         val mdProcessed = cm.markdownBlockPreProcessorPipeline.execute(mdInitial)
-        assertEquals("Hello-SUFFIX", mdProcessed.content.source)
-        assertEquals("changed/path.md", mdProcessed.content.path)
+        assertEquals("Hello-SUFFIX", mdProcessed.data.source)
+        assertEquals("changed/path.md", mdProcessed.data.path)
         assertEquals("touched", mdProcessed.metadata[FLAG_KEY])
 
         // composableBlock pre-process is intercepted: content updated
         val compInitial = PreProcessorPipelineContent(
-            content = RenderContext(
+            data = RenderContext(
                 source = "World",
                 fullSource = "World",
                 path = null,
@@ -39,19 +39,19 @@ class PluginInterceptionTest {
             metadata = PreProcessorMetadata(),
         )
         val compProcessed = cm.composableBlockPreProcessorPipeline.execute(compInitial)
-        assertEquals("COMPOSABLE:World", compProcessed.content.source)
+        assertEquals("COMPOSABLE:World", compProcessed.data.source)
 
         // blockList pre-process is intercepted: an extra block is appended
         val blocksInitial = listOf(Block.markdown("First", path = null))
         val blProcessed = cm.blockListPreProcessorPipeline.execute(
             PreProcessorPipelineContent(
-                content = BlocksProcessorContext(blocksInitial, fullSource = "First", path = null),
+                data = BlocksProcessorContext(blocksInitial, fullSource = "First", path = null),
                 metadata = PreProcessorMetadata(),
             )
         )
-        assertEquals(2, blProcessed.content.blocks.size)
-        assertEquals("First", blProcessed.content.blocks.first().source)
-        assertEquals("AddedByPlugin", blProcessed.content.blocks.last().source)
+        assertEquals(2, blProcessed.data.blocks.size)
+        assertEquals("First", blProcessed.data.blocks.first().source)
+        assertEquals("AddedByPlugin", blProcessed.data.blocks.last().source)
     }
 }
 
@@ -69,14 +69,16 @@ private class TestComposeMark : ComposeMark(FakeRenderer) {
 
 private object FakeRenderer : MarkdownRenderer {
     @Composable
-    override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {}
+    override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {
+    }
 
     @Composable
     override fun RenderComposableBlock(
         context: RenderContext,
         modifier: Modifier,
         content: @Composable () -> Unit
-    ) {}
+    ) {
+    }
 }
 
 private data class TestPluginConfig(
@@ -88,19 +90,19 @@ private val TestPlugin = composeMarkPlugin(::TestPluginConfig) { cfg ->
     // Intercept markdown block pre-processing
     onMarkdownBlockPreProcess { subject ->
         subject.metadata[FLAG_KEY] = "touched"
-        val c = subject.content
-        proceedWith(subject.copy(content = c.copy(source = c.source + cfg.suffix, path = cfg.newPath)))
+        val c = subject.data
+        proceedWith(subject.copy(data = c.copy(source = c.source + cfg.suffix, path = cfg.newPath)))
     }
 
     // Intercept composable block pre-processing
     onComposableBlockPreProcess { subject ->
-        val c = subject.content
-        proceedWith(subject.copy(content = c.copy(source = "COMPOSABLE:" + c.source)))
+        val c = subject.data
+        proceedWith(subject.copy(data = c.copy(source = "COMPOSABLE:" + c.source)))
     }
 
     // Intercept block list pre-processing
     onBlockListPreProcess { subject ->
-        val appended = subject.content.blocks + Block.markdown("AddedByPlugin", path = null)
-        proceedWith(subject.copy(content = subject.content.copy(blocks = appended)))
+        val appended = subject.data.blocks + Block.markdown("AddedByPlugin", path = null)
+        proceedWith(subject.copy(data = subject.data.copy(blocks = appended)))
     }
 }

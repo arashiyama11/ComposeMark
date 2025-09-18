@@ -10,7 +10,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 
 public data class PreProcessorPipelineContent<T>(
-    val content: T,
+    val data: T,
     val metadata: PreProcessorMetadata,
 )
 
@@ -44,8 +44,7 @@ public class PreProcessorMetadataKey<T>(public val name: String)
 
 public data class ComposablePipelineContent(
     val metadata: PreProcessorMetadata,
-    val source: String,
-    val fullSource: String,
+    val renderContext: RenderContext,
     val content: @Composable (Modifier) -> Unit
 )
 
@@ -114,10 +113,9 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
             val renderSubject =
                 ComposablePipelineContent(
                     processed.metadata,
-                    context.source,
-                    context.fullSource
+                    context,
                 ) { mod ->
-                    renderer.RenderMarkdownBlock(processed.content, mod)
+                    renderer.RenderMarkdownBlock(processed.data, mod)
                 }
 
             renderMarkdownBlockPipeline.execute(renderSubject)
@@ -137,7 +135,7 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
 
         val result = remember(context.path, context.source) {
             val subject = PreProcessorPipelineContent(
-                content = context,
+                data = context,
                 metadata = PreProcessorMetadata(),
             )
 
@@ -146,8 +144,7 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
             val renderSubject =
                 ComposablePipelineContent(
                     processed.metadata,
-                    context.source,
-                    context.fullSource
+                    context,
                 ) { mod ->
                     renderer.RenderComposableBlock(context, mod) {
                         currentContent.value()
@@ -173,7 +170,7 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
 
         val blocksProcessed = remember(blocks, path, fullSource) {
             val subject = PreProcessorPipelineContent(
-                content = BlocksProcessorContext(
+                data = BlocksProcessorContext(
                     blocks = blocks,
                     fullSource = fullSource ?: computedFullSource,
                     path = path,
@@ -183,21 +180,26 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
             blockListPreProcessorPipeline.execute(subject)
         }
 
-        val result = remember(blocksProcessed.content) {
+        val result = remember(blocksProcessed.data) {
             val subject = ComposablePipelineContent(
                 metadata = blocksProcessed.metadata,
-                source = blocksProcessed.content.fullSource,
-                fullSource = blocksProcessed.content.fullSource,
+                renderContext = RenderContext(
+                    source = blocksProcessed.data.fullSource,
+                    fullSource = blocksProcessed.data.fullSource,
+                    path = blocksProcessed.data.path,
+                    blockIndex = 0,
+                    totalBlocks = blocksProcessed.data.blocks.size,
+                ),
             ) { mod ->
-                val entries = blocksProcessed.content.blocks.mapIndexed { i, item ->
+                val entries = blocksProcessed.data.blocks.mapIndexed { i, item ->
                     val meta = (item as? BlockItemMeta)
-                    val resolvedPath = resolvePath(meta?.explicitPath, blocksProcessed.content.path)
+                    val resolvedPath = resolvePath(meta?.explicitPath, blocksProcessed.data.path)
                     val ctx = RenderContext(
                         source = item.source,
-                        fullSource = blocksProcessed.content.fullSource,
+                        fullSource = blocksProcessed.data.fullSource,
                         path = resolvedPath,
                         blockIndex = i,
-                        totalBlocks = blocksProcessed.content.blocks.size,
+                        totalBlocks = blocksProcessed.data.blocks.size,
                         attrs = meta?.attrs ?: emptyMap(),
                     )
                     BlockEntry(ctx) { childMod ->
@@ -278,7 +280,10 @@ public object Block {
             context: RenderContext,
             modifier: Modifier
         ) {
-            composeMark.RenderComposableBlock(context.copy(path = path, attrs = attrs), modifier) { content() }
+            composeMark.RenderComposableBlock(
+                context.copy(path = path, attrs = attrs),
+                modifier
+            ) { content() }
         }
     }
 }

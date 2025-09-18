@@ -12,21 +12,48 @@ class RenderPipelineInterceptionTest {
         val cm = RenderTestComposeMark()
 
         // onRenderMarkdownBlock
-        val md = ComposablePipelineContent(PreProcessorMetadata(), source = "MD", fullSource = "MD") { }
+        val md = ComposablePipelineContent(
+            metadata = PreProcessorMetadata(),
+            renderContext = RenderContext(
+                source = "MD",
+                fullSource = "MD",
+                path = null,
+                blockIndex = 0,
+                totalBlocks = 1,
+            ),
+        ) { }
         val mdProcessed = cm.renderMarkdownBlockPipeline.execute(md)
-        assertEquals("MD-RMD", mdProcessed.source)
+        assertEquals("MD-RMD", mdProcessed.renderContext.source)
         assertEquals("rmdb", mdProcessed.metadata[RENDER_FLAG_KEY])
 
         // onRenderComposableBlock
-        val cb = ComposablePipelineContent(PreProcessorMetadata(), source = "CB", fullSource = "CB") { }
+        val cb = ComposablePipelineContent(
+            metadata = PreProcessorMetadata(),
+            renderContext = RenderContext(
+                source = "CB",
+                fullSource = "CB",
+                path = null,
+                blockIndex = 0,
+                totalBlocks = 1,
+            ),
+        ) { }
         val cbProcessed = cm.renderComposableBlockPipeline.execute(cb)
-        assertEquals("CB-RCB", cbProcessed.source)
+        assertEquals("CB-RCB", cbProcessed.renderContext.source)
         assertEquals("rcbb", cbProcessed.metadata[RENDER_FLAG_KEY])
 
         // onRenderBlocks
-        val bl = ComposablePipelineContent(PreProcessorMetadata(), source = "B1\nB2", fullSource = "B1\nB2") { }
+        val bl = ComposablePipelineContent(
+            metadata = PreProcessorMetadata(),
+            renderContext = RenderContext(
+                source = "B1\nB2",
+                fullSource = "B1\nB2",
+                path = null,
+                blockIndex = 0,
+                totalBlocks = 2,
+            ),
+        ) { }
         val blProcessed = cm.renderBlocksPipeline.execute(bl)
-        assertEquals("B1\nB2-RBL", blProcessed.source)
+        assertEquals("B1\nB2-RBL", blProcessed.renderContext.source)
         assertEquals("rblb", blProcessed.metadata[RENDER_FLAG_KEY])
     }
 }
@@ -41,27 +68,29 @@ private class RenderTestComposeMark : ComposeMark(RenderNoopRenderer) {
 
 private object RenderNoopRenderer : MarkdownRenderer {
     @Composable
-    override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {}
+    override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {
+    }
 
     @Composable
     override fun RenderComposableBlock(
         context: RenderContext,
         modifier: Modifier,
         content: @Composable () -> Unit
-    ) {}
+    ) {
+    }
 }
 
 private val RenderInterceptPlugin: ComposeMarkPlugin<Unit> = composeMarkPlugin({ Unit }) {
     onRenderMarkdownBlock { subject ->
         subject.metadata[RENDER_FLAG_KEY] = "rmdb"
-        proceedWith(subject.copy(source = subject.source + "-RMD"))
+        proceedWith(subject.copy(renderContext = subject.renderContext.copy(source = subject.renderContext.source + "-RMD")))
     }
     onRenderComposableBlock { subject ->
         subject.metadata[RENDER_FLAG_KEY] = "rcbb"
-        proceedWith(subject.copy(source = subject.source + "-RCB"))
+        proceedWith(subject.copy(renderContext = subject.renderContext.copy(source = subject.renderContext.source + "-RCB")))
     }
     onRenderBlocks { subject ->
         subject.metadata[RENDER_FLAG_KEY] = "rblb"
-        proceedWith(subject.copy(source = subject.source + "-RBL"))
+        proceedWith(subject.copy(renderContext = subject.renderContext.copy(source = subject.renderContext.source + "-RBL")))
     }
 }

@@ -71,7 +71,9 @@ Column {
 }
 </Composable>
 
-## Timer <Composable>
+## Timer
+
+Time: <Composable inline width=50.dp>
 var time by remember { mutableStateOf(0) }
 LaunchedEffect(Unit) {
    while (true) {
@@ -79,5 +81,5 @@ LaunchedEffect(Unit) {
       kotlinx.coroutines.delay(1000)
    }
 }
-Text(text = "Time: $time seconds")
-</Composable> だよ
+Text(text = "$time")
+</Composable> seconds

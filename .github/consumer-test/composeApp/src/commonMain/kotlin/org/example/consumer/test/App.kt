@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -20,8 +18,9 @@ import io.github.arashiyama11.composemark.core.ComposeMark
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromPath
-import io.github.arashiyama11.composemark.plugin.PageScaffoldPlugin
-import io.github.arashiyama11.composemark.plugin.TocPosition
+import io.github.arashiyama11.composemark.plugin.inline.InlineEmbedPlugin
+import io.github.arashiyama11.composemark.plugin.scaffold.PageScaffoldPlugin
+import io.github.arashiyama11.composemark.plugin.scaffold.TocPosition
 
 @Composable
 @Preview
@@ -51,6 +50,8 @@ class MyComposeMark() : ComposeMark(MarkdownRendererImpl()) {
         install(SampleCodePlugin) {
             orientation = SampleCodeConfig.Orientation.HORIZONTAL
         }
+
+        install(InlineEmbedPlugin)
 
         install(PageScaffoldPlugin) {
             enableScroll(ScrollState(0), withToc = true)

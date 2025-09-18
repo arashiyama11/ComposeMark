@@ -14,8 +14,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import io.github.arashiyama11.composemark.core.ComposeMark
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromPath
-import io.github.arashiyama11.composemark.plugin.PageScaffoldPlugin
-import io.github.arashiyama11.composemark.plugin.TocPosition
+import io.github.arashiyama11.composemark.plugin.inline.InlineEmbedPlugin
+import io.github.arashiyama11.composemark.plugin.scaffold.PageScaffoldPlugin
+import io.github.arashiyama11.composemark.plugin.scaffold.TocPosition
 import io.github.arashiyama11.composemark.sample.ui.theme.ComposeMarkTheme
 
 class MainActivity : ComponentActivity() {
@@ -42,6 +43,7 @@ class MainActivity : ComponentActivity() {
 
 class MyComposeMark() : ComposeMark(MarkdownRendererImpl()) {
     override fun setup() {
+        install(InlineEmbedPlugin)
         install(PageScaffoldPlugin) {
             enableScroll(ScrollState(0), withToc = true)
             tocPosition = TocPosition.Right

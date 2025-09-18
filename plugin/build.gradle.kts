@@ -21,6 +21,10 @@ kotlin {
     explicitApi()
     jvm()
 
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-parameters")
+    }
+
     wasmJs {
         browser {
             binaries.executable()

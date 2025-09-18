@@ -52,6 +52,12 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-parameters")
+    }
+}
+
 composeMark {
     rootPath = rootProject.projectDir.absolutePath
     watch("README.md")
