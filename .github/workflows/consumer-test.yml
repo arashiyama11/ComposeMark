@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - uses: ./.github/actions/setup-java
 
@@ -52,7 +52,7 @@ jobs:
 
       - name: Set up Android SDK (Android only)
         if: matrix.task == 'assembleDebug'
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
 
       - name: Grant Gradle wrapper execute permission (consumer-test)
         run: chmod +x gradlew
