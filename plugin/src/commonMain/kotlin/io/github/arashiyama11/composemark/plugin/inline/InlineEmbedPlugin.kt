@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import io.github.arashiyama11.composemark.core.Block
 import io.github.arashiyama11.composemark.core.BlockItem
 import io.github.arashiyama11.composemark.core.ComposeMarkPlugin
+import io.github.arashiyama11.composemark.core.PipelinePriority
 import io.github.arashiyama11.composemark.core.PreProcessorMetadataKey
 import io.github.arashiyama11.composemark.core.composeMarkPlugin
 
@@ -84,7 +85,7 @@ public val LocalInlineDefaultTextMetrics: ProvidableCompositionLocal<InlineTextM
 
 public val InlineEmbedPlugin: ComposeMarkPlugin<InlineEmbedPluginConfig> =
     composeMarkPlugin(::InlineEmbedPluginConfig) { config ->
-        onBlockListPreProcess { subject ->
+        onBlockListPreProcess(priority = PipelinePriority.High) { subject ->
             val blocks = subject.data.blocks.toMutableList()
             if (blocks.isEmpty()) {
                 proceed()
@@ -165,7 +166,7 @@ public val InlineEmbedPlugin: ComposeMarkPlugin<InlineEmbedPluginConfig> =
             return@onBlockListPreProcess
         }
 
-        onRenderBlocks { subject ->
+        onRenderBlocks(priority = PipelinePriority.High) { subject ->
             val plans = subject.metadata[InlinePlaceholdersKey] ?: mutableStateMapOf()
             val wrapped = subject.copy { mod: Modifier ->
                 val registry = remember { mutableStateMapOf<String, @Composable () -> Unit>() }
@@ -184,7 +185,7 @@ public val InlineEmbedPlugin: ComposeMarkPlugin<InlineEmbedPluginConfig> =
             proceedWith(wrapped)
         }
 
-        onRenderComposableBlock { subject ->
+        onRenderComposableBlock(priority = PipelinePriority.High) { subject ->
             val result = subject.copy { modifier ->
                 val plans = LocalInlinePlans.current
                 val isInline =

@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.arashiyama11.composemark.core.ComposablePipelineContent
 import io.github.arashiyama11.composemark.core.ComposeMarkPlugin
+import io.github.arashiyama11.composemark.core.PipelinePriority
 import io.github.arashiyama11.composemark.core.PreProcessorMetadataKey
 import io.github.arashiyama11.composemark.core.composeMarkPlugin
 import kotlinx.coroutines.launch
@@ -175,7 +176,7 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
         }
 
         // Capture path into metadata so render phase can compute breadcrumbs.
-        onBlockListPreProcess { subject ->
+        onBlockListPreProcess(priority = PipelinePriority.Normal, order = -10) { subject ->
             val headings = subject.data.blocks.flatMapIndexed { i, block ->
                 parseHeadingsFromMarkdownSource(block.source).map {
                     if (it.blockIndex == null) it.copy(blockIndex = i) else it
@@ -187,7 +188,7 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
             proceed()
         }
 
-        onRenderBlocks {
+        onRenderBlocks(priority = PipelinePriority.Normal) {
 
             val headings =
                 it.metadata[PageHeadingsKey]
@@ -408,4 +409,3 @@ internal fun slugify(text: String): String = buildString {
         }
     }
 }.trim('-')
-

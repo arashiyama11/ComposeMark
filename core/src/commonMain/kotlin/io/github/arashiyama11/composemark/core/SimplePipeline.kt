@@ -2,12 +2,38 @@ package io.github.arashiyama11.composemark.core
 
 public typealias PipelineInterceptor<TSubject> = PipelineContext<TSubject>.(TSubject) -> Unit
 
+public enum class PipelinePriority(public val weight: Int) {
+    High(weight = 2),
+    Normal(weight = 1),
+    Low(weight = 0),
+}
+
+private data class PipelineEntry<T>(
+    val priority: PipelinePriority,
+    val order: Int,
+    val index: Long,
+    val block: PipelineInterceptor<T>,
+)
+
 public class Pipeline<T>() {
 
-    private val interceptors = mutableListOf<PipelineInterceptor<T>>()
+    private val entries = mutableListOf<PipelineEntry<T>>()
+    private var interceptors: List<PipelineInterceptor<T>> = emptyList()
+    private var nextIndex: Long = 0
 
-    public fun intercept(block: PipelineInterceptor<T>) {
-        interceptors += block
+    public fun intercept(
+        priority: PipelinePriority = PipelinePriority.Normal,
+        order: Int = 0,
+        block: PipelineInterceptor<T>,
+    ) {
+        entries += PipelineEntry(priority, order, nextIndex++, block)
+        interceptors = entries
+            .sortedWith(
+                compareByDescending<PipelineEntry<T>> { it.priority.weight }
+                    .thenByDescending { it.order }
+                    .thenBy { it.index }
+            )
+            .map { it.block }
     }
 
     public fun execute(
