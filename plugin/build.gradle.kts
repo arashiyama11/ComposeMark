@@ -20,6 +20,7 @@ kotlin {
 
     explicitApi()
     jvm()
+    jvmToolchain(11)
 
     compilerOptions {
         freeCompilerArgs.add("-Xcontext-parameters")
