@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("io.github.arashiyama11.composemark") version libs.versions.composeMark.get()
+    kotlin("plugin.serialization") version "2.0.20"
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.ksp)
 }
@@ -84,6 +85,7 @@ dependencies {
 
     implementation("com.mikepenz:multiplatform-markdown-renderer:0.37.0")
     implementation("com.mikepenz:multiplatform-markdown-renderer-android:0.37.0")
+    implementation("com.charleskorn.kaml:kaml:0.96.0")
 
 
     // Test

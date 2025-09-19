@@ -21,6 +21,7 @@ kotlin {
 
     explicitApi()
     jvm()
+    jvmToolchain(11)
 
     wasmJs {
         browser {
