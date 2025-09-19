@@ -66,7 +66,6 @@ class MyComposeMark() : ComposeMark(MarkdownRendererImpl()) {
             Yaml.default.configuration
             configureDecoderRegistry {
                 decoder<HeaderConfig>("toml") {
-                    println("DEBUG: Decoding FrontMatter as TOML: ${it.rawText}")
                     runCatching {
                         yaml.decodeFromString<HeaderConfig>(it.rawText)
                     }.fold(
