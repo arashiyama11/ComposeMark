@@ -73,7 +73,7 @@ internal fun stripFrontMatter(blocks: List<BlockItem>, consumed: String): List<B
     if (blocks.isEmpty() || consumed.isEmpty()) return blocks
     val first = blocks.first()
     val remaining = first.source.removePrefix(consumed)
-    if (remaining === first.source) return blocks
+    if (remaining == first.source) return blocks
 
     val newBlocks = ArrayList<BlockItem>(blocks.size)
     if (remaining.isNotEmpty()) {
