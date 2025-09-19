@@ -63,7 +63,6 @@ class MyComposeMark() : ComposeMark(MarkdownRendererImpl()) {
         install(FrontMatterConfigPlugin) {
 
             val yaml = Yaml.default
-            Yaml.default.configuration
             configureDecoderRegistry {
                 decoder<HeaderConfig>("toml") {
                     println("DEBUG: Decoding FrontMatter as TOML: ${it.rawText}")
