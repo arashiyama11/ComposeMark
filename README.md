@@ -22,12 +22,12 @@ hookable pipelines to customize preprocessing and rendering.
 // module build.gradle.kts
 plugins {
     id("com.google.devtools.ksp")
-    id("io.github.arashiyama11.composemark") version "0.0.0-alpha05" // optional: configure watch patterns via composeMark {}
+    id("io.github.arashiyama11.composemark") version "0.0.0-alpha06" // optional: configure watch patterns via composeMark {}
 }
 
 dependencies {
-    implementation("io.github.arashiyama11:composemark-core:0.0.0-alpha05")
-    ksp("io.github.arashiyama11:composemark-processor:0.0.0-alpha05")
+    implementation("io.github.arashiyama11:composemark-core:0.0.0-alpha06")
+    ksp("io.github.arashiyama11:composemark-processor:0.0.0-alpha06")
 }
 ```
 
@@ -52,7 +52,7 @@ When using KMP with Kotlin 2.x, wire the generated metadata sources and ensure b
 // module build.gradle.kts
 dependencies {
     // Use the metadata-specific configuration in KMP
-    kspCommonMainMetadata("io.github.arashiyama11:composemark-processor:0.0.0-alpha05")
+    kspCommonMainMetadata("io.github.arashiyama11:composemark-processor:0.0.0-alpha06")
 }
 
 kotlin {
