@@ -1,101 +1,113 @@
 # ComposeMark
 
-ComposeMark is a KSP-based tool that turns Markdown files (and inline Markdown) into Jetpack Compose
-`@Composable` functions. It also supports embedding Compose code inside Markdown and provides
-hookable pipelines to customize preprocessing and rendering.
+ComposeMark is a KSP-driven toolchain that turns Markdown files (and inline Markdown sections) into
+Jetpack Compose `@Composable` functions. It lets you embed Compose code inside Markdown, inject your
+own preprocessing/rendering steps, and ship higher level runtime helpers via optional plugins.
+
+## Highlights
+- Markdown → Compose generation for both file-based and inline sources
+- Inline `<Composable>` blocks with automatic import extraction
+- Pluggable preprocessing and rendering pipelines with metadata passing
+- Directory aggregation that exposes generated composables as a map
+- Bundled runtime plugins for front matter decoding, inline embeds, and page scaffolds
 
 ## Modules
+- `core`: Runtime APIs (`ComposeMark`, pipelines, annotations, renderer contracts)
+- `processor`: KSP processor + Gradle plugin (`io.github.arashiyama11.composemark`)
+- `plugin`: Optional runtime plugins (front matter, inline embed helpers, page scaffold)
+- `sample`: Demo Android app showcasing ComposeMark-generated composables
 
-- core: Annotations, pipelines, `ComposeMark`, and `MarkdownRenderer` APIs
-- processor: KSP processor that generates Compose implementations
+## Getting Started
 
-## Quick Start
-
-- Apply KSP and (recommended) the ComposeMark Gradle plugin
-
+### Gradle setup (single-platform / Android)
 ```kotlin
 // module build.gradle.kts
 plugins {
     id("com.google.devtools.ksp")
-    id("io.github.arashiyama11.composemark") version "0.0.0-alpha06" // optional: configure watch patterns via composeMark {}
+    id("io.github.arashiyama11.composemark") version "0.0.0-alpha06" // optional but recommended
 }
 
 dependencies {
     implementation("io.github.arashiyama11:composemark-core:0.0.0-alpha06")
     ksp("io.github.arashiyama11:composemark-processor:0.0.0-alpha06")
 }
-```
 
-- Note about defaults
-    - The plugin sets a default root path (`projectDir`) and passes it to KSP as
-      `composemark.root.path`.
-    - It does not watch any files by default. Configure patterns as needed:
-
-```kotlin
 composeMark {
-    rootPath = project.projectDir.path
-    watch("docs/**/*.md", "docs/**/*.mdx") // relative to rootPath; optional
-    ensureCommonKspBeforeKotlinCompile() // Ensure common metadata is generated before compile tasks
+    rootPath = project.projectDir.path // default; update when docs live elsewhere
+    watch("docs/**/*.md", "docs/**/*.mdx") // optional KSP inputs for incremental builds
 }
+
+// Call when you need common metadata before any Kotlin compilation tasks (KMP projects especially).
+composeMark.ensureCommonKspBeforeKotlinCompile()
 ```
 
-### Kotlin Multiplatform (Kotlin 2.x) setup
+The Gradle plugin wires the `composemark.root.path` KSP argument and attaches watched files to every
+`ksp*` task for incremental/continuous builds. Patterns are resolved relative to `rootPath`.
 
-When using KMP with Kotlin 2.x, wire the generated metadata sources and ensure build order:
-
+### Kotlin Multiplatform (Kotlin 2.x)
 ```kotlin
-// module build.gradle.kts
+plugins {
+    id("org.jetbrains.kotlin.multiplatform")
+    id("com.google.devtools.ksp")
+    id("io.github.arashiyama11.composemark")
+}
+
 dependencies {
-    // Use the metadata-specific configuration in KMP
     kspCommonMainMetadata("io.github.arashiyama11:composemark-processor:0.0.0-alpha06")
 }
 
 kotlin {
     sourceSets.named("commonMain") {
-        // Add KSP output to commonMain explicitly (KGP 2.x does not auto-register it)
         kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
     }
 }
+
+composeMark {
+    rootPath = project.layout.projectDirectory.dir("docs").asFile.path
+    watch("**/*.md", "**/*.mdx")
+    ensureCommonKspBeforeKotlinCompile()
+}
 ```
+`composemark.root.path` is mandatory when using directory aggregation; otherwise file reads are
+resolved relative to the project directory.
 
-Tip: See `.github/consumer-test` for a complete, working configuration (KMP setup,
-`kspCommonMainMetadata`, explicit `srcDir` registration for generated sources, and dependency
-wiring).
+Tip: `.github/consumer-test` contains a fully wired KMP sample using the same configuration.
 
-### Implement a renderer and a `ComposeMark`
-
+## Implementing a renderer and ComposeMark
 ```kotlin
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import io.github.arashiyama11.composemark.core.MarkdownRenderer
 import io.github.arashiyama11.composemark.core.ComposeMark
+import io.github.arashiyama11.composemark.core.MarkdownRenderer
+import io.github.arashiyama11.composemark.core.RenderContext
 
 class SimpleRenderer : MarkdownRenderer {
     @Composable
-    override fun RenderMarkdownBlock(modifier: Modifier, path: String?, source: String) {
-        Text(source, modifier)
+    override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {
+        Text(context.source, modifier)
     }
 
     @Composable
     override fun RenderComposableBlock(
+        context: RenderContext,
         modifier: Modifier,
-        path: String?,
-        source: String,
-        content: @Composable () -> Unit
+        content: @Composable () -> Unit,
     ) {
         content()
     }
 }
 
 class MyComposeMark : ComposeMark(SimpleRenderer()) {
-    override fun setup() { /* install plugins if needed */
+    override fun setup() {
+        // install(CustomPlugin) { ... }
     }
 }
 ```
+`MarkdownRenderer.BlockContainer` defaults to a vertical `Column`; override it if you need custom
+layout for mixed Markdown/Compose blocks.
 
-### Generate composables from Markdown
-
+## Generating composables from Markdown
 ```kotlin
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -112,30 +124,28 @@ interface Docs {
     @Composable
     @GenerateMarkdownFromSource(
         """
-    // Inline
-    You can write Compose below.
-    <Composable>
-      androidx.compose.material3.Text("Hello from Compose block!!!!!!!!")
-    </Composable>
-  """.trimIndent()
+        # Inline example
+        You can write Compose blocks inline.
+        <Composable>
+            import androidx.compose.material3.Text
+
+            Text("Hello from Compose block!")
+        </Composable>
+        """.trimIndent()
     )
     fun Inline(modifier: Modifier = Modifier)
 
     companion object : Docs by DocsImpl
 }
 ```
+`DocsImpl` is generated at build time. `<Composable>` blocks may include `import` statements which
+are hoisted to the top of the generated file.
 
-Build the project and call `Docs.Intro()` / `Docs.Inline()` like normal composables. Imports inside
-`<Composable>/*...*/</Composable>` blocks are automatically lifted to the top of the generated file.
-
-## Directory Aggregation (optional)
-
-Generate functions from a folder and access them via a map. Declare a property with the following
-type and annotate it.
-
+## Directory aggregation (optional)
 ```kotlin
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownContents
 import io.github.arashiyama11.composemark.core.annotation.GenerateMarkdownFromDirectory
 
 @GenerateMarkdownContents(MyComposeMark::class)
@@ -150,52 +160,41 @@ interface DirDocs {
     companion object : DirDocs by DirDocsImpl
 }
 ```
+Entries are keyed by a sanitized stem (e.g. `getting-started.md` → `GettingStarted`). Ensure
+`composeMark.rootPath` points to a directory that contains `docs/`.
 
-KSP reads files under `composemark.root.path/dir`. It generates one composable per file and an
-`override val contents` mapping sanitized file stems (e.g., getting_started → GettingStarted()) to
-those composables.
+## Bundled runtime plugins (`io.github.arashiyama11:composemark-plugin`)
+These helpers live in the `plugin` module and can be installed from `ComposeMark.setup()`.
 
-## Plugins and Pipelines
+### FrontMatterConfigPlugin
+Parses YAML front matter, stores decoded values in pipeline metadata, and gives you a hook to wrap
+rendered content. Configure decoders via `configureDecoderRegistry { }` or provide a custom
+`FrontMatterConfigRegistry`.
 
-- ComposeMark subclass: Owns the pipelines and installs plugins.
-- Pipelines: Interception points you can hook into:
-    - Preprocess: markdown block, composable block, block list
-    - Render: markdown block, composable block, block container
-- Plugin API: Use `composeMarkPlugin` or `createComposeMarkPlugin` to register interceptors.
-  Interceptors can read/modify the subject, attach metadata, call `proceedWith(...)`, or `finish()`.
+### InlineEmbedPlugin
+Transforms `[cm-inline:slotId]` placeholders inside Markdown into inline slots that accept Compose
+content. Width/height/alignment can be tweaked with attributes (e.g. `<Composable attrs="width=dp:240">`).
+Use `rememberInlineEmbedContent()` to build an `InlineTextContent` map when rendering text.
 
-Example: strip front matter and expose title
+### PageScaffoldPlugin
+Collects headings, auto-generates anchors, exposes breadcrumb metadata, and wraps the page with a
+simple scaffold (configurable TOC position, numbering, scrolling). Override the scaffold and TOC
+composables for full control.
+
+## Pipelines & metadata
+`ComposeMark` exposes pre-processing and rendering pipelines for markdown blocks, composable blocks,
+and block lists. Plugins register interceptors via `composeMarkPlugin { ... }`, with optional
+priorities/order, and can store structured data using `PreProcessorMetadataKey`.
 
 ```kotlin
-import io.github.arashiyama11.composemark.core.*
-
-val TitleKey = PreProcessorMetadataKey<String>("title")
-
-val FrontMatterPlugin = composeMarkPlugin({ Unit }) {
-    onMarkdownBlockPreProcess { sub ->
-        val header = sub.content.lineSequence().takeWhile { it != "---" }.joinToString("\n")
-        val body = sub.content.lineSequence().dropWhile { it != "---" }.drop(1).joinToString("\n")
-        if (header.isNotBlank()) sub.metadata[TitleKey] =
-            header.lines().firstOrNull()?.removePrefix("title:")?.trim()
-        proceedWith(sub.copy(content = body))
+install(composeMarkPlugin({ Unit }) {
+    onMarkdownBlockPreProcess { subject ->
+        val trimmed = subject.data.source.trimMargin()
+        proceedWith(subject.copy(data = subject.data.copy(source = trimmed)))
     }
-}
-
-class MyComposeMark : ComposeMark(SimpleRenderer()) {
-    override fun setup() {
-        install(FrontMatterPlugin)
-    }
-}
+})
 ```
-
-## Current Annotations
-
-- GenerateMarkdownContents(composeMark: KClass<out ComposeMark>, implName: String = "")
-- GenerateMarkdownFromPath(path: String)
-- GenerateMarkdownFromSource(source: String)
-- GenerateMarkdownFromDirectory(dir: String, includes: Array<String>, excludes: Array<String>) on a
-  property of type `Map<String, @Composable (Modifier) -> Unit>`
+`subject.metadata` is shared downstream; access it inside renderers via `RenderContext.metadata`.
 
 ## License
-
 Apache-2.0
