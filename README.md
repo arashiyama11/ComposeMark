@@ -1,8 +1,3 @@
----
-title: "ComposeMark"
-theme: "hogehoge"
----
-
 # ComposeMark
 
 ComposeMark is a KSP-based tool that turns Markdown files (and inline Markdown) into Jetpack Compose
