@@ -109,7 +109,7 @@ class MyComposeMark() : ComposeMark(MarkdownRendererImpl()) {
 @GenerateMarkdownContents(MyComposeMark::class)
 interface Contents {
     @Composable
-    @GenerateMarkdownFromPath("README.md")
+    @GenerateMarkdownFromPath("sample/README.md")
     fun README(modifier: Modifier)
 
     companion object : Contents by ContentsImpl
