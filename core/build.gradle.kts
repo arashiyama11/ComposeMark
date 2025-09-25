@@ -87,6 +87,8 @@ kotlin {
             dependencies {
                 api(compose.runtime)
                 api(compose.foundation)
+                api(libs.markdown.renderer)
+                api(libs.markdown.renderer.m3)
             }
         }
 

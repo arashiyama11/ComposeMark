@@ -48,6 +48,19 @@ public data class ComposablePipelineContent(
     val content: @Composable (Modifier) -> Unit
 )
 
+public data class MarkdownBlockContext(
+    val fullSource: String,
+    val path: String? = null,
+    val blockIndex: Int,
+    val totalBlocks: Int,
+)
+
+public data class MarkdownPipelineContent(
+    val context: MarkdownBlockContext,
+    val metadata: PreProcessorMetadata,
+    val content: @Composable (MarkdownProperty) -> Unit
+)
+
 public data class RenderContext(
     val source: String,
     val fullSource: String,
@@ -77,7 +90,7 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
         Pipeline()
     public val blockListPreProcessorPipeline: Pipeline<PreProcessorPipelineContent<BlocksProcessorContext>> =
         Pipeline()
-    public val renderMarkdownBlockPipeline: Pipeline<ComposablePipelineContent> = Pipeline()
+    public val renderMarkdownBlockPipeline: Pipeline<MarkdownPipelineContent> = Pipeline()
     public val renderComposableBlockPipeline: Pipeline<ComposablePipelineContent> = Pipeline()
     public val renderBlocksPipeline: Pipeline<ComposablePipelineContent> = Pipeline()
 
@@ -110,18 +123,22 @@ public abstract class ComposeMark(private val renderer: MarkdownRenderer) {
                 )
 
 
-            val renderSubject =
-                ComposablePipelineContent(
-                    processed.metadata,
-                    context,
-                ) { mod ->
-                    renderer.RenderMarkdownBlock(processed.data, mod)
-                }
+            val renderSubject = MarkdownPipelineContent(
+                metadata = processed.metadata,
+                context = MarkdownBlockContext(
+                    fullSource = processed.data.fullSource,
+                    path = processed.data.path,
+                    blockIndex = processed.data.blockIndex,
+                    totalBlocks = processed.data.totalBlocks,
+                ),
+            ) { mp ->
+                mp.Render()
+            }
 
             renderMarkdownBlockPipeline.execute(renderSubject)
         }
         CompositionLocalProvider(LocalPreProcessorMetadata provides result.metadata.snapshot()) {
-            result.content(modifier)
+            result.content(renderer.rememberMarkdownProperty(context.source, modifier))
         }
     }
 

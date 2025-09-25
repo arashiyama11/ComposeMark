@@ -36,7 +36,7 @@ public class ComposeMarkPluginScope(
     public fun onRenderMarkdownBlock(
         priority: PipelinePriority = PipelinePriority.Normal,
         order: Int = 0,
-        block: PipelineInterceptor<ComposablePipelineContent>,
+        block: PipelineInterceptor<MarkdownPipelineContent>,
     ) {
         composeMark.renderMarkdownBlockPipeline.intercept(priority, order, block)
     }
