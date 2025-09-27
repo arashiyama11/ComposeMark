@@ -25,20 +25,14 @@ import io.github.arashiyama11.composemark.plugin.scaffold.TocPosition
 @Composable
 @Preview
 fun App() {
-
-    CompositionLocalProvider(
-        LocalMarkdownTypography provides rememberMarkdownTypography(),
-        LocalMarkdownColors provides rememberMarkdownColors()
-    ) {
-        MaterialTheme {
-            SelectionContainer {
-                Column(
-                    modifier = Modifier.padding(horizontal = 48.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ContentsImpl.Compose(Modifier)
-                }
+    MaterialTheme {
+        SelectionContainer {
+            Column(
+                modifier = Modifier.padding(horizontal = 48.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                ContentsImpl.Compose(Modifier)
             }
         }
     }
