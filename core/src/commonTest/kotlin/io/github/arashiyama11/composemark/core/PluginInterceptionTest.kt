@@ -2,6 +2,8 @@ package io.github.arashiyama11.composemark.core
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.mikepenz.markdown.model.MarkdownColors
+import com.mikepenz.markdown.model.MarkdownTypography
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -69,8 +71,10 @@ private class TestComposeMark : ComposeMark(FakeRenderer) {
 
 private object FakeRenderer : MarkdownRenderer {
     @Composable
-    override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {
-    }
+    override fun rememberMarkdownColors(): MarkdownColors = TODO("Not required for this test")
+
+    @Composable
+    override fun rememberMarkdownTypography(): MarkdownTypography = TODO("Not required for this test")
 
     @Composable
     override fun RenderComposableBlock(

@@ -3,6 +3,7 @@ package io.github.arashiyama11.composemark.plugin.scaffold
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -28,6 +29,11 @@ import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.mikepenz.markdown.compose.components.CustomMarkdownComponent
+import com.mikepenz.markdown.compose.components.MarkdownComponent
+import com.mikepenz.markdown.compose.components.MarkdownComponentModel
+import com.mikepenz.markdown.compose.components.MarkdownComponents
+import com.mikepenz.markdown.utils.getUnescapedTextInNode
 import io.github.arashiyama11.composemark.core.ComposablePipelineContent
 import io.github.arashiyama11.composemark.core.ComposeMarkPlugin
 import io.github.arashiyama11.composemark.core.PipelinePriority
@@ -239,7 +245,13 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                         try {
                             if (rect != null) rq.bringIntoView(rect) else rq.bringIntoView()
                         } catch (t: Throwable) {
+                            println("[PageScaffoldPlugin] bringIntoView failed: " + t.message)
                         }
+                    } else {
+                        println(
+                            "[PageScaffoldPlugin] requester not found for anchor=" + key +
+                                    " registered=" + requesters.keys
+                        )
                     }
                 }
 
@@ -292,7 +304,9 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
                                             DefaultHeadingItem(
                                                 h,
                                                 numbering = config.tocNumbering,
-                                                onClick = { scope.launch { jumpTo(h) } }
+                                                onClick = {
+                                                    scope.launch { jumpTo(h) }
+                                                }
                                             )
                                         }
                                     }
@@ -367,7 +381,98 @@ public val PageScaffoldPlugin: ComposeMarkPlugin<PageScaffoldConfig> =
 
             proceedWith(wrapped)
         }
+
+        onRenderMarkdownBlock(priority = PipelinePriority.High) { subject ->
+            val allHeadings = subject.metadata[PageHeadingsKey] ?: emptyList()
+            if (allHeadings.isEmpty()) {
+                proceed()
+                return@onRenderMarkdownBlock
+            }
+
+            val blockHeadings = allHeadings.filter { it.blockIndex == subject.context.blockIndex }
+            if (blockHeadings.isEmpty()) {
+                proceed()
+                return@onRenderMarkdownBlock
+            }
+
+            val wrapped = subject.copy { property ->
+                if (property.components is AnchoredMarkdownComponents) {
+                    subject.content(property)
+                    return@copy
+                }
+
+                val anchorCache = remember(blockHeadings) { mutableMapOf<Int, String>() }
+                val headingQueue = remember(blockHeadings) { ArrayDeque(blockHeadings) }
+
+                val anchorResolver = remember(blockHeadings) {
+                    { model: MarkdownComponentModel ->
+                        anchorCache.getOrPut(model.node.startOffset) {
+                            val resolved = headingQueue.removeFirstOrNull()
+                            val fallback = slugify(
+                                model.node.getUnescapedTextInNode(model.content).trim()
+                            )
+                            val anchor = resolved?.anchor ?: fallback
+                            anchor
+                        }
+                    }
+                }
+
+                val anchoredComponents =
+                    remember(property.components, blockHeadings, anchorResolver) {
+                        property.components.withHeadingAnchors(anchorResolver)
+                    }
+
+                val next = property.copy(components = anchoredComponents)
+                subject.content(next)
+            }
+
+            proceedWith(wrapped)
+        }
     }
+
+private class AnchoredMarkdownComponents(
+    delegate: MarkdownComponents,
+    anchorResolver: (MarkdownComponentModel) -> String,
+) : MarkdownComponents {
+    override val text: MarkdownComponent = delegate.text
+    override val eol: MarkdownComponent = delegate.eol
+    override val codeFence: MarkdownComponent = delegate.codeFence
+    override val codeBlock: MarkdownComponent = delegate.codeBlock
+    override val heading1: MarkdownComponent = delegate.heading1.wrapWithAnchor(anchorResolver)
+    override val heading2: MarkdownComponent = delegate.heading2.wrapWithAnchor(anchorResolver)
+    override val heading3: MarkdownComponent = delegate.heading3.wrapWithAnchor(anchorResolver)
+    override val heading4: MarkdownComponent = delegate.heading4.wrapWithAnchor(anchorResolver)
+    override val heading5: MarkdownComponent = delegate.heading5.wrapWithAnchor(anchorResolver)
+    override val heading6: MarkdownComponent = delegate.heading6.wrapWithAnchor(anchorResolver)
+    override val setextHeading1: MarkdownComponent =
+        delegate.setextHeading1.wrapWithAnchor(anchorResolver)
+    override val setextHeading2: MarkdownComponent =
+        delegate.setextHeading2.wrapWithAnchor(anchorResolver)
+    override val blockQuote: MarkdownComponent = delegate.blockQuote
+    override val paragraph: MarkdownComponent = delegate.paragraph
+    override val orderedList: MarkdownComponent = delegate.orderedList
+    override val unorderedList: MarkdownComponent = delegate.unorderedList
+    override val image: MarkdownComponent = delegate.image
+    override val horizontalRule: MarkdownComponent = delegate.horizontalRule
+    override val table: MarkdownComponent = delegate.table
+    override val checkbox: MarkdownComponent = delegate.checkbox
+    override val custom: CustomMarkdownComponent? = delegate.custom
+}
+
+private fun MarkdownComponents.withHeadingAnchors(
+    anchorResolver: (MarkdownComponentModel) -> String,
+): MarkdownComponents =
+    this as? AnchoredMarkdownComponents ?: AnchoredMarkdownComponents(this, anchorResolver)
+
+private fun MarkdownComponent.wrapWithAnchor(
+    anchorResolver: (MarkdownComponentModel) -> String,
+): MarkdownComponent = { model ->
+    val anchorProvider = LocalAnchorModifier.current
+    val anchor = anchorResolver(model)
+    Box(anchorProvider(anchor)) {
+        this@wrapWithAnchor(model)
+    }
+}
 
 @Composable
 private fun DefaultHeadingItem(
@@ -384,7 +489,9 @@ private fun DefaultHeadingItem(
     val indent = (h.level - 1).coerceAtLeast(0) * 8
     val label = if (numbering) "• ${h.text}" else h.text
     val base = Modifier.padding(start = indent.dp)
-    val clickable = onClick?.let { base.clickable(onClick = it) } ?: base
+    val clickable = onClick?.let {
+        base.clickable(onClick = it)
+    } ?: base
     Text(text = label, style = style, modifier = clickable)
 }
 

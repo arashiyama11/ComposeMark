@@ -78,7 +78,8 @@ class DirectoryAggregationTest {
             import androidx.compose.ui.Modifier
 
             class Renderer: MarkdownRenderer {
-                @Composable override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {}
+                @Composable override fun rememberMarkdownColors() = TODO("Not required for this test")
+                @Composable override fun rememberMarkdownTypography() = TODO("Not required for this test")
                 @Composable override fun RenderComposableBlock(context: RenderContext, modifier: Modifier, content: @Composable () -> Unit) { content() }
             }
 
@@ -142,7 +143,8 @@ class DirectoryAggregationTest {
             import androidx.compose.ui.Modifier
 
             class Renderer: MarkdownRenderer {
-                @Composable override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {}
+                @Composable override fun rememberMarkdownColors() = TODO("Not required for this test")
+                @Composable override fun rememberMarkdownTypography() = TODO("Not required for this test")
                 @Composable override fun RenderComposableBlock(context: RenderContext, modifier: Modifier, content: @Composable () -> Unit) { content() }
             }
 
@@ -193,7 +195,8 @@ class DirectoryAggregationTest {
             import androidx.compose.ui.Modifier
 
             class Renderer: MarkdownRenderer {
-                @Composable override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {}
+                @Composable override fun rememberMarkdownColors() = TODO("Not required for this test")
+                @Composable override fun rememberMarkdownTypography() = TODO("Not required for this test")
                 @Composable override fun RenderComposableBlock(context: RenderContext, modifier: Modifier, content: @Composable () -> Unit) { content() }
             }
 
