@@ -2,6 +2,8 @@ package io.github.arashiyama11.composemark.plugin
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.mikepenz.markdown.model.MarkdownColors
+import com.mikepenz.markdown.model.MarkdownTypography
 import io.github.arashiyama11.composemark.core.BlocksProcessorContext
 import io.github.arashiyama11.composemark.core.ComposablePipelineContent
 import io.github.arashiyama11.composemark.core.ComposeMark
@@ -57,8 +59,10 @@ class PageScaffoldPluginTest {
 
     private class TestRenderer : MarkdownRenderer {
         @Composable
-        override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {
-        }
+        override fun rememberMarkdownColors(): MarkdownColors = TODO("Not required for this test")
+
+        @Composable
+        override fun rememberMarkdownTypography(): MarkdownTypography = TODO("Not required for this test")
 
         @Composable
         override fun RenderComposableBlock(
@@ -108,7 +112,7 @@ class PageScaffoldPluginTest {
                 blockIndex = 0,
                 totalBlocks = 1,
             ),
-        ) { }
+        ) { _ -> }
 
         val result = cm.renderBlocksPipeline.execute(subject)
         val hs = result.metadata[PageHeadingsKey]
@@ -170,7 +174,7 @@ class PageScaffoldPluginTest {
                 blockIndex = 0,
                 totalBlocks = 1,
             ),
-        ) { }
+        ) { _ -> }
 
         val result = cm.renderBlocksPipeline.execute(subject)
         assertEquals(PageScaffoldApplied.Custom, result.metadata[PageScaffoldAppliedKey])

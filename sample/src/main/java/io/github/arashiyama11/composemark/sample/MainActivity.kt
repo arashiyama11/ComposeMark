@@ -64,7 +64,7 @@ class MyComposeMark() : ComposeMark(MarkdownRendererImpl()) {
 
             val yaml = Yaml.default
             configureDecoderRegistry {
-                decoder<HeaderConfig>("toml") {
+                decoder<HeaderConfig>("yaml") {
                     runCatching {
                         yaml.decodeFromString<HeaderConfig>(it.rawText)
                     }.fold(

@@ -33,6 +33,9 @@ import io.github.arashiyama11.composemark.core.ComposeMarkPlugin
 import io.github.arashiyama11.composemark.core.PipelinePriority
 import io.github.arashiyama11.composemark.core.PreProcessorMetadataKey
 import io.github.arashiyama11.composemark.core.composeMarkPlugin
+import com.mikepenz.markdown.model.markdownAnnotator
+import com.mikepenz.markdown.model.markdownInlineContent
+import kotlin.collections.LinkedHashMap
 
 public object InlineEmbedDefaults {
     public val defaultWidth: TextUnit = 16.sp
@@ -182,6 +185,49 @@ public val InlineEmbedPlugin: ComposeMarkPlugin<InlineEmbedPluginConfig> =
                     subject.content(mod)
                 }
             }
+            proceedWith(wrapped)
+        }
+
+        onRenderMarkdownBlock(priority = PipelinePriority.High) { subject ->
+            val wrapped = subject.copy { property ->
+                val inlineContentState = rememberInlineEmbedContent()
+                if (inlineContentState.isEmpty()) {
+                    subject.content(property)
+                    return@copy
+                }
+
+                val existingInline = property.inlineContent.inlineContent
+                val mergedInline = if (existingInline.isEmpty()) {
+                    inlineContentState.toMap()
+                } else {
+                    LinkedHashMap<String, InlineTextContent>(existingInline.size + inlineContentState.size).apply {
+                        putAll(existingInline)
+                        putAll(inlineContentState)
+                    }
+                }
+
+                if (mergedInline.isEmpty()) {
+                    subject.content(property)
+                    return@copy
+                }
+
+                subject.metadata[InlineContentMapKey] = mergedInline
+
+                val baseAnnotate = property.annotator.annotate
+                val annotator = markdownAnnotator(config = property.annotator.config) { content, child ->
+                    val segment = content.substring(child.startOffset, child.endOffset)
+                    val handled = annotateInlineEmbedContent(segment)
+                    if (handled) true else baseAnnotate?.invoke(this, content, child) ?: false
+                }
+
+                val next = property.copy(
+                    inlineContent = markdownInlineContent(mergedInline),
+                    annotator = annotator,
+                )
+
+                subject.content(next)
+            }
+
             proceedWith(wrapped)
         }
 

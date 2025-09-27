@@ -2,6 +2,8 @@ package io.github.arashiyama11.composemark.core
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.mikepenz.markdown.model.MarkdownColors
+import com.mikepenz.markdown.model.MarkdownTypography
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -12,18 +14,17 @@ class RenderPipelineInterceptionTest {
         val cm = RenderTestComposeMark()
 
         // onRenderMarkdownBlock
-        val md = ComposablePipelineContent(
+        val md = MarkdownPipelineContent(
             metadata = PreProcessorMetadata(),
-            renderContext = RenderContext(
-                source = "MD",
+            context = MarkdownBlockContext(
                 fullSource = "MD",
                 path = null,
                 blockIndex = 0,
                 totalBlocks = 1,
             ),
-        ) { }
+        ) { _ -> }
         val mdProcessed = cm.renderMarkdownBlockPipeline.execute(md)
-        assertEquals("MD-RMD", mdProcessed.renderContext.source)
+        assertEquals("MD-RMD", mdProcessed.context.fullSource)
         assertEquals("rmdb", mdProcessed.metadata[RENDER_FLAG_KEY])
 
         // onRenderComposableBlock
@@ -36,7 +37,7 @@ class RenderPipelineInterceptionTest {
                 blockIndex = 0,
                 totalBlocks = 1,
             ),
-        ) { }
+        ) { _ -> }
         val cbProcessed = cm.renderComposableBlockPipeline.execute(cb)
         assertEquals("CB-RCB", cbProcessed.renderContext.source)
         assertEquals("rcbb", cbProcessed.metadata[RENDER_FLAG_KEY])
@@ -51,7 +52,7 @@ class RenderPipelineInterceptionTest {
                 blockIndex = 0,
                 totalBlocks = 2,
             ),
-        ) { }
+        ) { _ -> }
         val blProcessed = cm.renderBlocksPipeline.execute(bl)
         assertEquals("B1\nB2-RBL", blProcessed.renderContext.source)
         assertEquals("rblb", blProcessed.metadata[RENDER_FLAG_KEY])
@@ -68,8 +69,10 @@ private class RenderTestComposeMark : ComposeMark(RenderNoopRenderer) {
 
 private object RenderNoopRenderer : MarkdownRenderer {
     @Composable
-    override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {
-    }
+    override fun rememberMarkdownColors(): MarkdownColors = TODO("Not required for this test")
+
+    @Composable
+    override fun rememberMarkdownTypography(): MarkdownTypography = TODO("Not required for this test")
 
     @Composable
     override fun RenderComposableBlock(
@@ -83,7 +86,10 @@ private object RenderNoopRenderer : MarkdownRenderer {
 private val RenderInterceptPlugin: ComposeMarkPlugin<Unit> = composeMarkPlugin({ Unit }) {
     onRenderMarkdownBlock { subject ->
         subject.metadata[RENDER_FLAG_KEY] = "rmdb"
-        proceedWith(subject.copy(renderContext = subject.renderContext.copy(source = subject.renderContext.source + "-RMD")))
+        val updatedContext = subject.context.copy(
+            fullSource = subject.context.fullSource + "-RMD"
+        )
+        proceedWith(subject.copy(context = updatedContext))
     }
     onRenderComposableBlock { subject ->
         subject.metadata[RENDER_FLAG_KEY] = "rcbb"

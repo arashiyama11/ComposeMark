@@ -1,6 +1,5 @@
 package io.github.arashiyama11.composemark.sample
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
@@ -12,141 +11,41 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.font.FontFamily
-import com.mikepenz.markdown.compose.Markdown
+import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.elements.MarkdownText
 import com.mikepenz.markdown.model.DefaultMarkdownColors
 import com.mikepenz.markdown.model.DefaultMarkdownTypography
 import com.mikepenz.markdown.model.MarkdownColors
 import com.mikepenz.markdown.model.MarkdownTypography
-import com.mikepenz.markdown.model.markdownAnnotator
-import com.mikepenz.markdown.model.markdownInlineContent
 import io.github.arashiyama11.composemark.core.BlockEntry
+import io.github.arashiyama11.composemark.core.MarkdownProperty
 import io.github.arashiyama11.composemark.core.MarkdownRenderer
 import io.github.arashiyama11.composemark.core.RenderContext
-import io.github.arashiyama11.composemark.plugin.inline.annotateInlineEmbedContent
-import io.github.arashiyama11.composemark.plugin.inline.rememberInlineEmbedContent
-import io.github.arashiyama11.composemark.plugin.scaffold.LocalAnchorModifier
 import org.intellij.markdown.MarkdownTokenTypes
 
 
 class MarkdownRendererImpl : MarkdownRenderer {
-    @SuppressLint("UnusedBoxWithConstraintsScope")
     @Composable
-    override fun RenderMarkdownBlock(context: RenderContext, modifier: Modifier) {
-        val color = rememberMarkdownColors()
-        val typography = rememberMarkdownTypography()
-        val am = LocalAnchorModifier.current
-
-        val mcs = markdownComponents(
-            heading1 = {
-                val modifier = am(context.source.substring(it.node.startOffset, it.node.endOffset))
-
-                MarkdownText(
-                    modifier = modifier
-                        .semantics {
-                            heading()
-                        },
-                    content = it.content,
-                    node = it.node,
-                    style = it.typography.h1,
-                    contentChildType = MarkdownTokenTypes.ATX_CONTENT,
-                )
-            },
-
-            heading2 = {
-                val modifier = am(context.source.substring(it.node.startOffset, it.node.endOffset))
-
-                MarkdownText(
-                    modifier = modifier
-                        .semantics {
-                            heading()
-                        },
-                    content = it.content,
-                    node = it.node,
-                    style = it.typography.h2,
-                    contentChildType = MarkdownTokenTypes.ATX_CONTENT,
-                )
-            },
-            heading3 = {
-                val modifier = am(context.source.substring(it.node.startOffset, it.node.endOffset))
-
-                MarkdownText(
-                    modifier = modifier
-                        .semantics {
-                            heading()
-                        },
-                    content = it.content,
-                    node = it.node,
-                    style = it.typography.h3,
-                    contentChildType = MarkdownTokenTypes.ATX_CONTENT,
-                )
-            },
-
-            heading4 = {
-                val modifier = am(context.source.substring(it.node.startOffset, it.node.endOffset))
-
-                MarkdownText(
-                    modifier = modifier
-                        .semantics {
-                            heading()
-                        },
-                    content = it.content,
-                    node = it.node,
-                    style = it.typography.h4,
-                    contentChildType = MarkdownTokenTypes.ATX_CONTENT,
-                )
-            },
-
-            heading5 = {
-                val modifier = am(context.source.substring(it.node.startOffset, it.node.endOffset))
-
-                MarkdownText(
-                    modifier = modifier
-                        .semantics {
-                            heading()
-                        },
-                    content = it.content,
-                    node = it.node,
-                    style = it.typography.h5,
-                    contentChildType = MarkdownTokenTypes.ATX_CONTENT,
-                )
-            },
-
-            heading6 = {
-                val modifier = am(context.source.substring(it.node.startOffset, it.node.endOffset))
-
-                MarkdownText(
-                    modifier = modifier
-                        .semantics {
-                            heading()
-                        }
-                        .background(Color.Yellow),
-                    content = it.content,
-                    node = it.node,
-                    style = it.typography.h6,
-                    contentChildType = MarkdownTokenTypes.ATX_CONTENT,
-                )
-            },
-        )
-
-
-        Markdown(
-            content = context.source,
-            modifier = modifier,
-            colors = color,
-            typography = typography,
-            components = mcs,
-            inlineContent = markdownInlineContent(rememberInlineEmbedContent()),
-            annotator = markdownAnnotator { _, node ->
-                annotateInlineEmbedContent(
-                    context.source.substring(
-                        node.startOffset,
-                        node.endOffset
+    override fun rememberMarkdownProperty(content: String, modifier: Modifier): MarkdownProperty {
+        val base = super.rememberMarkdownProperty(content, modifier)
+        val components = remember {
+            markdownComponents(
+                heading6 = { model: MarkdownComponentModel ->
+                    MarkdownText(
+                        modifier = Modifier
+                            .background(Color.Yellow)
+                            .semantics { heading() },
+                        content = model.content,
+                        node = model.node,
+                        style = model.typography.h6,
+                        contentChildType = MarkdownTokenTypes.ATX_CONTENT,
                     )
-                )
-            }
-        )
+                }
+            )
+        }
+
+        return base.copy(components = components)
     }
 
     @Composable
@@ -166,50 +65,44 @@ class MarkdownRendererImpl : MarkdownRenderer {
             }
         }
     }
-}
+    @Composable
+    override fun rememberMarkdownColors(): MarkdownColors {
+        val colorScheme = MaterialTheme.colorScheme
 
-
-@Composable
-fun rememberMarkdownColors(): MarkdownColors {
-    val colorScheme = MaterialTheme.colorScheme
-
-    val colors = remember {
-        DefaultMarkdownColors(
-            text = colorScheme.onBackground,
-            codeBackground = colorScheme.surfaceVariant,
-            inlineCodeBackground = colorScheme.surfaceVariant,
-            dividerColor = colorScheme.outline,
-            tableBackground = colorScheme.surface
-        )
+        return remember {
+            DefaultMarkdownColors(
+                text = colorScheme.onBackground,
+                codeBackground = colorScheme.surfaceVariant,
+                inlineCodeBackground = colorScheme.surfaceVariant,
+                dividerColor = colorScheme.outline,
+                tableBackground = colorScheme.surface
+            )
+        }
     }
 
-    return colors
-}
-
-@Composable
-fun rememberMarkdownTypography(): MarkdownTypography {
-    val colorScheme = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val markdownTypography = remember {
-        DefaultMarkdownTypography(
-            h1 = typography.headlineLarge,
-            h2 = typography.headlineMedium,
-            h3 = typography.headlineSmall,
-            h4 = typography.titleLarge,
-            h5 = typography.titleMedium,
-            h6 = typography.titleSmall,
-            text = typography.bodyLarge,
-            code = typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-            inlineCode = typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-            quote = typography.bodyLarge.copy(color = colorScheme.secondary),
-            paragraph = typography.bodyLarge,
-            ordered = typography.bodyLarge,
-            bullet = typography.bodyLarge,
-            list = typography.bodyLarge,
-            textLink = TextLinkStyles(),
-            table = typography.bodyMedium
-        )
+    @Composable
+    override fun rememberMarkdownTypography(): MarkdownTypography {
+        val colorScheme = MaterialTheme.colorScheme
+        val typography = MaterialTheme.typography
+        return remember {
+            DefaultMarkdownTypography(
+                h1 = typography.headlineLarge,
+                h2 = typography.headlineMedium,
+                h3 = typography.headlineSmall,
+                h4 = typography.titleLarge,
+                h5 = typography.titleMedium,
+                h6 = typography.titleSmall,
+                text = typography.bodyLarge,
+                code = typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                inlineCode = typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                quote = typography.bodyLarge.copy(color = colorScheme.secondary),
+                paragraph = typography.bodyLarge,
+                ordered = typography.bodyLarge,
+                bullet = typography.bodyLarge,
+                list = typography.bodyLarge,
+                textLink = TextLinkStyles(),
+                table = typography.bodyMedium
+            )
+        }
     }
-
-    return markdownTypography
 }
