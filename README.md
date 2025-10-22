@@ -36,12 +36,12 @@ helpers for common scenarios.
 ```kotlin
 plugins {
     id("com.google.devtools.ksp")
-    id("io.github.arashiyama11.composemark") version "0.0.0-alpha07" // optional but recommended
+    id("io.github.arashiyama11.composemark") version "0.0.0-alpha08" // optional but recommended
 }
 
 dependencies {
-    implementation("io.github.arashiyama11:composemark-core:0.0.0-alpha07")
-    ksp("io.github.arashiyama11:composemark-processor:0.0.0-alpha07")
+    implementation("io.github.arashiyama11:composemark-core:0.0.0-alpha08")
+    ksp("io.github.arashiyama11:composemark-processor:0.0.0-alpha08")
 }
 
 composeMark {
@@ -62,7 +62,7 @@ The Gradle plugin automatically:
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.google.devtools.ksp")
-    id("io.github.arashiyama11.composemark") version "0.0.0-alpha07"
+    id("io.github.arashiyama11.composemark") version "0.0.0-alpha08"
 }
 
 kotlin {
@@ -72,7 +72,7 @@ kotlin {
 }
 
 dependencies {
-    kspCommonMainMetadata("io.github.arashiyama11:composemark-processor:0.0.0-alpha07")
+    kspCommonMainMetadata("io.github.arashiyama11:composemark-processor:0.0.0-alpha08")
 }
 
 composeMark {
