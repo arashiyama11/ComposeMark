@@ -85,7 +85,7 @@ dependencies {
 
     implementation("com.mikepenz:multiplatform-markdown-renderer:0.37.0")
     implementation("com.mikepenz:multiplatform-markdown-renderer-android:0.37.0")
-    implementation("com.charleskorn.kaml:kaml:0.98.0")
+    implementation("com.charleskorn.kaml:kaml:0.102.0")
 
 
     // Test
