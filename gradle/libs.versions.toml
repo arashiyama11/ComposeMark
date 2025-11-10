@@ -14,7 +14,7 @@ compose-multiplatform = "1.9.1"
 coreKtx = "1.17.0"
 mockk = "1.14.6"
 composeMark = "0.0.0-alpha08"
-markdown-renderer = "0.37.0"
+markdown-renderer = "0.38.1"
 
 [libraries]
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoServiceAnnotations" }
